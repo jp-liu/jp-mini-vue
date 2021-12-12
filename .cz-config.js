@@ -12,10 +12,11 @@ module.exports = {
     { value: '⏪回滚', name: '回滚:    代码回退' }
   ],
   scopes: [
+    { name: 'vue' },
+    { name: 'shared' },
     { name: 'reactivity' },
     { name: 'runtime-core' },
-    { name: 'runtime-dom' },
-    { name: 'vue' }
+    { name: 'runtime-dom' }
   ],
   // it needs to match the value for field type. Eg.: 'fix'
   /*  scopeOverrides: {
