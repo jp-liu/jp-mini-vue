@@ -4,6 +4,7 @@
   "description": "Implement a mini Vue to help me understand Vue3",
   "main": "index.js",
   "scripts": {
+    "build": "rollup -c rollup.config.js",
     "test": "jest",
     "prepare": "husky install",
     "commit": "git-cz"
@@ -16,6 +17,7 @@
     "@babel/preset-env": "^7.16.4",
     "@babel/preset-typescript": "^7.16.0",
     "@commitlint/config-conventional": "^15.0.0",
+    "@rollup/plugin-typescript": "^8.3.0",
     "@types/jest": "^27.0.3",
     "@typescript-eslint/eslint-plugin": "^5.5.0",
     "@typescript-eslint/parser": "^5.5.0",
@@ -36,6 +38,7 @@
     "jest": "^27.4.4",
     "lint-staged": "^12.1.2",
     "prettier": "^2.5.1",
+    "rollup": "^2.61.1",
     "typescript": "^4.5.2"
   },
   "config": {
