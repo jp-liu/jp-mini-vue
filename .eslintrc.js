@@ -20,6 +20,7 @@ module.exports = {
     }
   ],
   rules: {
+    'no-debugger': process.NODE_ENV === 'production' ? 2 : 0,
     camelcase: 0,
     'no-unused-expressions': 0,
     'no-unused-vars': [
