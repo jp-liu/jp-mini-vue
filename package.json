@@ -2,7 +2,8 @@
   "name": "mini-vue-impl",
   "version": "1.0.0",
   "description": "Implement a mini Vue to help me understand Vue3",
-  "main": "index.js",
+  "main": "lib/jp-liu-mini-vue.cjs.js",
+  "module": "lib/jp-liu-mini-vue.esm.js",
   "scripts": {
     "build": "rollup -c rollup.config.js",
     "test": "jest",
