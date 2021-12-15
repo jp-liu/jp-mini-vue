@@ -27,16 +27,34 @@ function mountComponent(vnode: any, container: any) {
   // 2.初始化组件状态
   setupComponent(instance)
 
-  // 3.挂载组件
+  // 3.获取状态之后,创建组件代理对象,访问组件实例
+  instance.proxy = new Proxy(
+    {},
+    {
+      get(target, key) {
+        if (key in instance.setupState) {
+          return instance.setupState[key]
+        }
+        if (key === '$el') {
+          return instance.vnode.el
+        }
+      }
+    }
+  )
+
+  // 4.挂载组件
   setupRenderEffect(instance, container)
 }
 
 function setupRenderEffect(instance, container) {
-  // 1.调用渲染函数,获取组件虚拟节点树
-  const subTree = instance.render()
+  // 1.调用渲染函数,获取组件虚拟节点树,绑定`this`为代理对象,实现`render`函数中访问组件状态
+  const subTree = instance.render.call(instance.proxy)
 
   // 2.继续`patch`,递归挂载组件
   patch(subTree, container)
+
+  // 3.组件实例绑定`el`用于后续`patch`精准更新
+  instance.vnode.el = subTree.el
 }
 
 function processElement(vnode: any, container: any) {
@@ -45,8 +63,8 @@ function processElement(vnode: any, container: any) {
 }
 
 function mountElement(vnode: any, container: any) {
-  // 1.创建真实元素
-  const el = document.createElement(vnode.type)
+  // 1.创建真实元素,并挂载到`vnode`上,方便访问
+  const el = (vnode.el = document.createElement(vnode.type))
 
   // 2.挂载属性
   const { props } = vnode
