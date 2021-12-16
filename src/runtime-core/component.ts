@@ -1,7 +1,12 @@
+import { shallowReadonly } from '../reactivey/reactive'
+import { initProps } from './componentProps'
+
 export function createComponentInstance(vnode) {
   const component: any = {
+    vnode,
     type: vnode.type,
-    vnode
+    setupState: {},
+    props: {}
   }
 
   return component
@@ -10,6 +15,7 @@ export function createComponentInstance(vnode) {
 export function setupComponent(instance) {
   // TODO
   // 1.initProps
+  initProps(instance, instance.vnode.props)
   // 2.initSlots
 
   // 2.初始化组件状态
@@ -25,7 +31,7 @@ function setupStateFulComponent(instance: any) {
 
   // 3.获取配置返回状态
   if (setup) {
-    const setupResult = setup()
+    const setupResult = setup(shallowReadonly(instance.props))
     handleSetupResult(instance, setupResult)
   }
 }

@@ -1,3 +1,4 @@
+import { isOn } from '../shared/index'
 import { ShapeFlag } from '../shared/shapeFlag'
 import { createComponentInstance, setupComponent } from './component'
 import { PublicInstanceProxyHandlers } from './componentPublicInstance'
@@ -59,8 +60,18 @@ function mountElement(vnode: any, container: any) {
 
   // 2.挂载属性
   const { props } = vnode
+
   for (const key in props) {
-    el.setAttribute(key, props[key])
+    const val = props[key]
+    // 2.1 事件
+    if (isOn(key)) {
+      const event = key.slice(2).toLowerCase()
+      el.addEventListener(event, val)
+    }
+    // 2.2 属性
+    else {
+      el.setAttribute(key, props[key])
+    }
   }
 
   // 3.处理子组件
