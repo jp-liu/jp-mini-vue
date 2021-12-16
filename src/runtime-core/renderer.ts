@@ -1,15 +1,18 @@
+import { ShapeFlag } from '../shared/shapeFlag'
 import { createComponentInstance, setupComponent } from './component'
+import { PublicInstanceProxyHandlers } from './componentPublicInstance'
 
 export function render(vnode, rootContainer: HTMLElement | string) {
   patch(vnode, rootContainer)
 }
 
 function patch(vnode, container) {
+  const { shapeFlag } = vnode
   // 1.判断类型,进行不同操作
-  if (typeof vnode.type === 'string') {
-    // 1.1 TODO 元素
+  if (shapeFlag & ShapeFlag.ELEMENT) {
+    // 1.1 元素
     processElement(vnode, container)
-  } else {
+  } else if (shapeFlag & ShapeFlag.STATEFUL_COMPONENT) {
     // 1.2 组件
     processComponent(vnode, container)
   }
@@ -28,19 +31,7 @@ function mountComponent(vnode: any, container: any) {
   setupComponent(instance)
 
   // 3.获取状态之后,创建组件代理对象,访问组件实例
-  instance.proxy = new Proxy(
-    {},
-    {
-      get(target, key) {
-        if (key in instance.setupState) {
-          return instance.setupState[key]
-        }
-        if (key === '$el') {
-          return instance.vnode.el
-        }
-      }
-    }
-  )
+  instance.proxy = new Proxy({ _: instance }, PublicInstanceProxyHandlers)
 
   // 4.挂载组件
   setupRenderEffect(instance, container)
@@ -73,13 +64,13 @@ function mountElement(vnode: any, container: any) {
   }
 
   // 3.处理子组件
-  const { children } = vnode
+  const { children, shapeFlag } = vnode
   // 3.1 文本类,直接设置内容
-  if (typeof children === 'string') {
+  if (shapeFlag & ShapeFlag.TEXT_CHILDREN) {
     el.textContent = children
   }
   // 3.2 数组,则证明是元素或者组件
-  else if (Array.isArray(children)) {
+  else if (shapeFlag & ShapeFlag.ARRAY_CHILDREN) {
     mountChildren(children, el)
   }
 
