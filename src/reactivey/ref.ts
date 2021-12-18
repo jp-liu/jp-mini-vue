@@ -59,7 +59,7 @@ export function unRef(ref) {
   return isRef(ref) ? ref.value : ref
 }
 
-export function proxyRef(objectWithRef) {
+export function proxyRefs(objectWithRef) {
   return new Proxy(objectWithRef, {
     get(target, key) {
       // get 操作,提供解包后的结果

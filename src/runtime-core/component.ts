@@ -1,4 +1,5 @@
 import { shallowReadonly } from '../reactivey/reactive'
+import { proxyRefs } from '../reactivey/ref'
 import { emit } from './componentEmit'
 import { initProps } from './componentProps'
 import { initSlots } from './componentSlots'
@@ -18,6 +19,8 @@ export function createComponentInstance(vnode, parent) {
     slots: {},
     provides: parent ? parent.provides : {},
     parent,
+    isMounted: false,
+    subTree: null,
     emit: () => {}
   }
 
@@ -52,7 +55,7 @@ function setupStateFulComponent(instance: any) {
     })
     // 释放实例
     setCurrentInstance(null)
-    handleSetupResult(instance, setupResult)
+    handleSetupResult(instance, proxyRefs(setupResult))
   }
 }
 
