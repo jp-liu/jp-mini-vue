@@ -4,7 +4,8 @@ import { hasOwn } from '../shared/index'
  * @description 组件实例属性访问符
  */
 const publicPropertiesMap = {
-  $el: i => i.vnode.el
+  $el: i => i.vnode.el,
+  $slots: i => i.slots
 }
 
 /**
@@ -26,7 +27,7 @@ export const PublicInstanceProxyHandlers = {
     // 2.组件实例上的专有属性,$el/$data...
     const publicGetter = publicPropertiesMap[key]
     if (publicGetter) {
-      return publicGetter()
+      return publicGetter(instance)
     }
   }
 }

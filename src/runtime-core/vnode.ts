@@ -23,6 +23,14 @@ export function createVNode(type, props?, children?) {
     vnode.shapeFlag |= ShapeFlag.ARRAY_CHILDREN
   }
 
+  // 是否有插槽
+  if (
+    vnode.shapeFlag & ShapeFlag.STATEFUL_COMPONENT &&
+    typeof children === 'object'
+  ) {
+    vnode.shapeFlag |= ShapeFlag.SLOT_CHILDREN
+  }
+
   return vnode
 }
 
