@@ -1,4 +1,4 @@
-export { createApp } from './createApp'
+export { createRenderer } from './renderer'
 export { renderSlot } from './helpers/renderSlot'
 export { createTextVnode } from './vnode'
 export { getCurrentInstance } from './component'

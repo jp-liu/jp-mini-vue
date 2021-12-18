@@ -7,6 +7,8 @@ export const hasChanged = (value, newValue) => !Object.is(value, newValue)
 export const hasOwn = (val, key) =>
   Object.prototype.hasOwnProperty.call(val, key)
 
+export const keys = obj => Object.keys(obj)
+
 export const isOn = (str: string): boolean => /^on[A-Z]/.test(str)
 
 export const camelize = (str: string) => {

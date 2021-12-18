@@ -1,6 +1,6 @@
 import { effect } from '../effect'
 import { reactive } from '../reactive'
-import { isRef, proxyRef, ref, unRef } from '../ref'
+import { isRef, proxyRefs, ref, unRef } from '../ref'
 
 describe('ref', () => {
   it('happy path', () => {
@@ -16,7 +16,6 @@ describe('ref', () => {
     // 调用`effect`的时候需要收集`ref`的依赖
     // 所以:
     //  1.`a.value`需要加入响应式系统,需要`ReactiveEffect`
-    //  2.
     effect(() => {
       calls++
       dummy = a.value
@@ -72,7 +71,7 @@ describe('ref', () => {
       age: ref(10)
     }
 
-    const proxyUser = proxyRef(user)
+    const proxyUser = proxyRefs(user)
     expect(user.age.value).toBe(10)
     expect(proxyUser.age).toBe(10)
     expect(proxyUser.name).toBe('xiaoping')
