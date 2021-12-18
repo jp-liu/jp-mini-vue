@@ -1,22 +1,44 @@
 import { isOn } from '../shared/index'
 import { ShapeFlag } from '../shared/shapeFlag'
+import { Fragment, Text } from './vnode'
 import { createComponentInstance, setupComponent } from './component'
 import { PublicInstanceProxyHandlers } from './componentPublicInstance'
 
-export function render(vnode, rootContainer: HTMLElement | string) {
+export function render(vnode, rootContainer: HTMLElement) {
   patch(vnode, rootContainer)
 }
 
 function patch(vnode, container) {
-  const { shapeFlag } = vnode
-  // 1.判断类型,进行不同操作
-  if (shapeFlag & ShapeFlag.ELEMENT) {
-    // 1.1 元素
-    processElement(vnode, container)
-  } else if (shapeFlag & ShapeFlag.STATEFUL_COMPONENT) {
-    // 1.2 组件
-    processComponent(vnode, container)
+  const { type, shapeFlag } = vnode
+
+  switch (type) {
+    case Fragment:
+      processFragment(vnode, container)
+      break
+    case Text:
+      processText(vnode, container)
+      break
+
+    default:
+      // 1.判断类型,进行不同操作
+      if (shapeFlag & ShapeFlag.ELEMENT) {
+        // 1.1 元素
+        processElement(vnode, container)
+      } else if (shapeFlag & ShapeFlag.STATEFUL_COMPONENT) {
+        // 1.2 组件
+        processComponent(vnode, container)
+      }
+      break
   }
+}
+
+function processFragment(vnode: any, container: any) {
+  mountChildren(vnode.children, container)
+}
+
+function processText(vnode: any, container: any) {
+  const el = (vnode.el = document.createTextNode(vnode.children))
+  container.append(el)
 }
 
 function processComponent(vnode: any, container: any) {

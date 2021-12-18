@@ -1,4 +1,4 @@
-import { h } from '../../lib/jp-liu-mini-vue.esm.js'
+import { h, createTextVnode } from '../../lib/jp-liu-mini-vue.esm.js'
 
 import { Foo } from './foo.js'
 
@@ -20,7 +20,10 @@ export const App = {
       Foo,
       {},
       {
-        default: ({ age }) => h('p', {}, 'default' + age),
+        default: ({ age }) => [
+          h('p', {}, 'default' + age),
+          createTextVnode('你好啊')
+        ],
         header: () => h('p', {}, 'header'),
         footer: () => h('p', {}, 'footer')
       }
