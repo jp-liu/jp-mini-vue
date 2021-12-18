@@ -3,6 +3,11 @@ import { emit } from './componentEmit'
 import { initProps } from './componentProps'
 import { initSlots } from './componentSlots'
 
+/**
+ * 设置当前组件实例
+ */
+let currentInstance = null
+
 export function createComponentInstance(vnode) {
   const component: any = {
     vnode,
@@ -37,9 +42,13 @@ function setupStateFulComponent(instance: any) {
 
   // 3.获取配置返回状态
   if (setup) {
+    // 设置全局实例对象,用于`getCurrentInstance`
+    setCurrentInstance(instance)
     const setupResult = setup(shallowReadonly(instance.props), {
       emit: instance.emit.bind(null, instance)
     })
+    // 释放实例
+    setCurrentInstance(null)
     handleSetupResult(instance, setupResult)
   }
 }
@@ -66,4 +75,12 @@ function finishComponentSetup(instance: any) {
   }
 
   // 到这里, 组件的状态,渲染函数已经全部获取到了,可以进行渲染了
+}
+
+function setCurrentInstance(instance) {
+  currentInstance = instance
+}
+
+export function getCurrentInstance() {
+  return currentInstance
 }
