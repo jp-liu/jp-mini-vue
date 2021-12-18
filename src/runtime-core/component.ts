@@ -1,4 +1,5 @@
 import { shallowReadonly } from '../reactivey/reactive'
+import { emit } from './componentEmit'
 import { initProps } from './componentProps'
 
 export function createComponentInstance(vnode) {
@@ -6,8 +7,11 @@ export function createComponentInstance(vnode) {
     vnode,
     type: vnode.type,
     setupState: {},
-    props: {}
+    props: {},
+    emit: () => {}
   }
+
+  component.emit = emit
 
   return component
 }
@@ -31,7 +35,9 @@ function setupStateFulComponent(instance: any) {
 
   // 3.获取配置返回状态
   if (setup) {
-    const setupResult = setup(shallowReadonly(instance.props))
+    const setupResult = setup(shallowReadonly(instance.props), {
+      emit: instance.emit.bind(null, instance)
+    })
     handleSetupResult(instance, setupResult)
   }
 }
