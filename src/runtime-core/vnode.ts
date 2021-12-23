@@ -11,11 +11,13 @@ export const Text = Symbol('Text')
  */
 export function createVNode(type, props?, children?) {
   const vnode = {
-    type,
-    props,
-    children,
-    shapeFlag: getShapeFlag(type),
-    el: null
+    type, // 节点类型
+    props, // 属性
+    children, // 子节点
+    component: null, // 组件引用
+    key: props && props.key, // diff使用的key
+    shapeFlag: getShapeFlag(type), // 虚拟节点类型
+    el: null // 真实`DOM`引用,精确的`DOM`更新
   }
 
   if (typeof children === 'string') {

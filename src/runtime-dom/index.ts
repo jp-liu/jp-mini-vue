@@ -1,14 +1,19 @@
 import { createRenderer } from '../runtime-core'
 import { isOn } from '../shared'
 
-function createElement(type) {
+function createElement(type: string) {
   return document.createElement(type)
 }
+
 function createTextNode(text: string) {
   return document.createTextNode(text)
 }
 
-function patchProp(el, key, prevProp, nextProp) {
+function setElementText(el: HTMLElement, text) {
+  el.textContent = text
+}
+
+function patchProp(el: HTMLElement, key: string, prevProp, nextProp) {
   // 2.1 事件
   if (isOn(key)) {
     const event = key.slice(2).toLowerCase()
@@ -17,22 +22,35 @@ function patchProp(el, key, prevProp, nextProp) {
   // 2.2 属性
   else {
     if (!nextProp) {
-      el.removeAttribute(key, nextProp)
+      el.removeAttribute(key)
     } else {
       el.setAttribute(key, nextProp)
     }
   }
 }
 
-function insert(el, parent) {
-  parent.append(el)
+function insert(
+  child: HTMLElement,
+  parent: HTMLElement,
+  anchor: Node | null = null
+) {
+  parent.insertBefore(child, anchor)
+}
+
+function remove(el: HTMLElement) {
+  const parent = el.parentNode
+  if (parent) {
+    parent.removeChild(el)
+  }
 }
 
 const renderer: any = createRenderer({
   createElement,
+  setElementText,
   createTextNode,
   patchProp,
-  insert
+  insert,
+  remove
 })
 
 export * from '../runtime-core'

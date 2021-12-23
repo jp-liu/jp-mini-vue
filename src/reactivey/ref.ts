@@ -60,6 +60,10 @@ export function unRef(ref) {
 }
 
 export function proxyRefs(objectWithRef) {
+  if (!isObject(objectWithRef)) {
+    console.warn('Proxy origin data should be a object')
+    return
+  }
   return new Proxy(objectWithRef, {
     get(target, key) {
       // get 操作,提供解包后的结果
