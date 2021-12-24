@@ -246,7 +246,7 @@ export function createRenderer(options) {
 
     // (a b)
     // (a b) c
-    // 从左侧向右开始对比
+    // 1.从左侧向右开始对比
     while (i <= e1 && i <= e2) {
       const n1 = c1[i]
       const n2 = c2[i]
@@ -261,7 +261,7 @@ export function createRenderer(options) {
 
     //   (b c)
     // e (b c)
-    // 从右侧向左开始对比
+    // 2.从右侧向左开始对比
     while (i <= e1 && i <= e2) {
       const n1 = c1[e1]
       const n2 = c2[e2]
@@ -275,14 +275,16 @@ export function createRenderer(options) {
       e2--
     }
 
-    // 新的比老得多
+    // 3.新的比老得多
+    // 3.1 后面新增
+    // (a b)
+    // (a b) c
+    // i:2  e1:1  e2:2
+    // 3.2 前面新增
+    //   (a b)
+    // c (a b)
+    // i:0  e1:-1  e2:0
     if (i > e1) {
-      // 后面新增
-      // (a b)     i:2  e1:1  e2:2
-      // (a b) c
-      // 前面新增
-      //   (a b)   i:0  e1:-1  e2:0
-      // c (a b)
       if (i <= e2) {
         // 前面新增,需要提供锚点,为 a,
         // e2 + 1 < l2 说明 e2 在向左推进,右侧全部相同,取 e2 右侧第一个
@@ -294,15 +296,124 @@ export function createRenderer(options) {
         }
       }
     }
-    // 老的比新的多
-    // (a b) c d    i:2  e1:3  e2:1
+
+    // 4.老的比新的多
+    // (a b) c d
     // (a b)
-    //  c d (a b)   i:0  e1:1  e2:-1
+    // i:2  e1:3  e2:1
+    //  c d (a b)
     //      (a b)
+    // i:0  e1:1  e2:-1
     else if (i > e2) {
       while (i <= e1) {
         hostRemove(c1[i].el)
         i++
+      }
+    }
+
+    // 5.中间乱序部分
+    // [i ... e1 + 1]: a b [c d e] f g
+    // [i ... e2 + 1]: a b [e d c h] f g
+    // i = 2, e1 = 4, e2 = 5
+    else {
+      const s1 = i // prev starting index
+      const s2 = i // next starting index
+
+      // 5.1 创建新节点的索引映射表
+      //     便于旧节点判断是否存在于新节点
+      const keyTonewIndexMap = new Map()
+      for (let i = s2; i <= e2; i++) {
+        const nextChild = c2[i]
+        if (nextChild.key != null) {
+          keyTonewIndexMap.set(nextChild.key, i)
+        }
+      }
+
+      // 5.2 遍历旧节点,判断在新节点中是否存在,做特定处理
+      let patched = 0 // 旧节点已处理个数
+      const toBePatched = e2 - s2 + 1 // 新节点需要处理总数量
+
+      // 创建新节点对旧节点位置映射,用于判断节点是否需要移动
+      // 并且使用最长递增子序列,优化移动逻辑,没有移动的节点,下标是连续的
+      // a,b,(c,d,e),f,g
+      // a,b,(e,c,d),f,g
+      // c d 无需移动，移动 e 即可
+      let moved = false
+      let maxNewIndexSoFar = 0 // 最长子序列个数
+      const newIndexToOldIndexMap = new Array(toBePatched)
+      // 初始化 0,表示旧在新中都不存在
+      for (let i = 0; i < toBePatched; i++) newIndexToOldIndexMap[i] = 0
+
+      for (let i = s1; i <= e1; i++) {
+        const prevChild = c1[i]
+
+        // 当没有新节点对比完了,剩下的都需要卸载
+        // [i ... e1 + 1]: a b [c d h] f g
+        // [i ... e2 + 1]: a b [d c] f g
+        // d c 处理之后, h 是多的,需要卸载,无需后续比较,优化点
+        // patched >= toBePatched 说明处理节点数超过新节点数量,剩余的都是旧的多余的
+        if (patched >= toBePatched) {
+          hostRemove(prevChild.el)
+          continue
+        }
+
+        // 获取旧节点在新节点的位置
+        let newIndex
+        if (prevChild.key != null) {
+          newIndex = keyTonewIndexMap.get(prevChild.key)
+        } else {
+          for (let j = s2; j <= e2; j++) {
+            if (isSameNodeVNodeType(c1[i], c2[j])) {
+              newIndex = j
+              break
+            }
+          }
+        }
+
+        if (newIndex === undefined) {
+          hostRemove(c1[i].el)
+        } else {
+          // 是否移动位置
+          if (newIndex >= maxNewIndexSoFar) {
+            maxNewIndexSoFar = newIndex
+          } else {
+            moved = true
+          }
+
+          // 记录旧节点在新节点的下标映射,这里说明新旧节点都存在,需要进行递归比较
+          // newIndex - s2 起点从0开始,但是要知道是新节点的第几个
+          // i + 1 i有可能为0,不能为0,0表示没有映射关系,新节点中没有这个旧节点
+          newIndexToOldIndexMap[newIndex - s2] = i + 1
+
+          patch(prevChild, c2[newIndex], container, parentComponent, null)
+          // 对比一个节点,新`VNode`中旧少一个需要对比的
+          patched++
+        }
+      }
+
+      // 获取最长递增子序列
+      const increasingNewIndexSequence = moved
+        ? getSequence(newIndexToOldIndexMap)
+        : []
+      let j = increasingNewIndexSequence.length - 1
+      for (let i = toBePatched - 1; i >= 0; i--) {
+        const nextIndex = i + s2
+        const nextChild = c2[nextIndex]
+        const anchor = nextIndex + 1 < l2 ? c2[nextIndex + 1].el : null
+
+        // 0 表示在旧节点遍历的时候,没找到,是需要新创建的
+        if (newIndexToOldIndexMap[i] === 0) {
+          patch(null, nextChild, container, parentComponent, anchor)
+        }
+        // 不为 0 则表示旧节点在新节点中存在, 判断是否需要移动位置
+        else if (moved) {
+          if (j < 0 || i !== increasingNewIndexSequence[j]) {
+            console.log('移动位置')
+            hostInsert(nextChild.el, container, anchor)
+          } else {
+            j--
+          }
+        }
       }
     }
   }
@@ -347,4 +458,46 @@ export function createRenderer(options) {
   return {
     createApp: createAppAPI(render)
   }
+}
+
+// https://en.wikipedia.org/wiki/Longest_increasing_subsequence
+function getSequence(arr: number[]): number[] {
+  const p = arr.slice()
+  const result = [0]
+  let i, j, u, v, c
+  const len = arr.length
+  for (i = 0; i < len; i++) {
+    const arrI = arr[i]
+    if (arrI !== 0) {
+      j = result[result.length - 1]
+      if (arr[j] < arrI) {
+        p[i] = j
+        result.push(i)
+        continue
+      }
+      u = 0
+      v = result.length - 1
+      while (u < v) {
+        c = (u + v) >> 1
+        if (arr[result[c]] < arrI) {
+          u = c + 1
+        } else {
+          v = c
+        }
+      }
+      if (arrI < arr[result[u]]) {
+        if (u > 0) {
+          p[i] = result[u - 1]
+        }
+        result[u] = i
+      }
+    }
+  }
+  u = result.length
+  v = result[u - 1]
+  while (u-- > 0) {
+    result[u] = v
+    v = p[v]
+  }
+  return result
 }
