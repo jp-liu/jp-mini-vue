@@ -23,17 +23,29 @@ export function createRenderer(options) {
     setElementText: hostSetElementText
   } = options
 
+  // 提供给外部的启动渲染方法
   function render(vnode, rootContainer: HTMLElement) {
+    // 渲染器入口，从这里开始递归处理节点
     patch(null, vnode, rootContainer, null, null)
   }
 
+  /**
+   * @description 比较新旧节点,进行创建和修改操作
+   * @param n1 旧节点
+   * @param n2 新节点
+   * @param container 节点容器
+   * @param parentComponent 父组件
+   * @param anchor 节点插入的锚点
+   */
   function patch(n1, n2, container, parentComponent, anchor) {
     const { type, shapeFlag } = n2
 
     switch (type) {
+      // 分段节点(不需要容器的无根节点)
       case Fragment:
         processFragment(n1, n2, container, parentComponent, anchor)
         break
+      // 文本节点
       case Text:
         processText(n1, n2, container, anchor)
         break
@@ -58,6 +70,8 @@ export function createRenderer(options) {
     parentComponent,
     anchor
   ) {
+    // 不需要父容器的切片,也就是再不用创建一个容器包裹当前内容,
+    // 直接将内容添加到当前的容器内,就可以了
     mountChildren(n2.children, container, parentComponent, anchor)
   }
 
@@ -193,14 +207,14 @@ export function createRenderer(options) {
     /**
      * 新旧节点类型枚举
      *  1.  新: 文本  ==> 旧: 文本  ==> 更新文本内容
-     *                   旧: 数组  ==> 卸载节点替换为文本
+     *                    旧: 数组  ==> 卸载节点替换为文本
      *
      *  2.  新: 数组  ==> 旧: 文本  ==> 清空文本挂载新节点
-     *                   旧: 数组  ==> 双端对比算法
+     *                    旧: 数组  ==> 双端对比算法
      *
      * 只有最后一种情况存在双端对比算法,上面情况都是比较好处理的情况
      */
-    // 1.新节点是文本节点, => 替换文本 || 写在节点
+    // 1.新节点是文本节点, => 卸载节点 || 替换文本
     if (nextShapeFlag & ShapeFlag.TEXT_CHILDREN) {
       if (prevShapeFlag & ShapeFlag.ARRAY_CHILDREN) {
         unmountChildren(n1.children)
@@ -240,6 +254,8 @@ export function createRenderer(options) {
     let e1 = c1.length - 1
     let e2 = c2.length - 1
 
+    // 创建辅助函数,判断两个节点是否同一个节点
+    // 同一个节点就可以进行递归比较了,不是同一个,则不是删除就是创建
     function isSameNodeVNodeType(c1, c2) {
       return c1.type === c2.type && c1.key === c2.key
     }
@@ -316,11 +332,12 @@ export function createRenderer(options) {
     // [i ... e2 + 1]: a b [e d c h] f g
     // i = 2, e1 = 4, e2 = 5
     else {
+      // 重新记录两组节点的起点
       const s1 = i // prev starting index
       const s2 = i // next starting index
 
       // 5.1 创建新节点的索引映射表
-      //     便于旧节点判断是否存在于新节点
+      //     便于旧节点遍历时,判断是否存在于新节点
       const keyTonewIndexMap = new Map()
       for (let i = s2; i <= e2; i++) {
         const nextChild = c2[i]
@@ -338,8 +355,9 @@ export function createRenderer(options) {
       // a,b,(c,d,e),f,g
       // a,b,(e,c,d),f,g
       // c d 无需移动，移动 e 即可
+      // 节点是否移动,移动就需要计算最长递增子序列,如果没移动,则直接不需要计算了
       let moved = false
-      let maxNewIndexSoFar = 0 // 最长子序列个数
+      let maxNewIndexSoFar = 0 //
       const newIndexToOldIndexMap = new Array(toBePatched)
       // 初始化 0,表示旧在新中都不存在
       for (let i = 0; i < toBePatched; i++) newIndexToOldIndexMap[i] = 0
@@ -347,10 +365,10 @@ export function createRenderer(options) {
       for (let i = s1; i <= e1; i++) {
         const prevChild = c1[i]
 
-        // 当没有新节点对比完了,剩下的都需要卸载
+        // 当新节点对比完了,剩下的都需要卸载
         // [i ... e1 + 1]: a b [c d h] f g
         // [i ... e2 + 1]: a b [d c] f g
-        // d c 处理之后, h 是多的,需要卸载,无需后续比较,优化点
+        // d c 处理之后, h 是多的,需要卸载,无需后续比较,优化
         // patched >= toBePatched 说明处理节点数超过新节点数量,剩余的都是旧的多余的
         if (patched >= toBePatched) {
           hostRemove(prevChild.el)
@@ -370,6 +388,7 @@ export function createRenderer(options) {
           }
         }
 
+        // newIndex 不存在,则说明旧节点在新节点中不存在
         if (newIndex === undefined) {
           hostRemove(c1[i].el)
         } else {
@@ -407,6 +426,10 @@ export function createRenderer(options) {
         }
         // 不为 0 则表示旧节点在新节点中存在, 判断是否需要移动位置
         else if (moved) {
+          // 不在最长递增子序列中,说明,为了大局,他需要被移动
+          // a,b,(c,d,e),f,g
+          // a,b,(e,c,d),f,g
+          // 最长子序列其实也就是连续的稳定的没动的节点,这里是 c d 他俩的兄弟关系没动,只需要移动 e
           if (j < 0 || i !== increasingNewIndexSequence[j]) {
             console.log('移动位置')
             hostInsert(nextChild.el, container, anchor)
