@@ -207,10 +207,10 @@ export function createRenderer(options) {
     /**
      * 新旧节点类型枚举
      *  1.  新: 文本  ==> 旧: 文本  ==> 更新文本内容
-     *                    旧: 数组  ==> 卸载节点替换为文本
+     *                   旧: 数组  ==> 卸载节点替换为文本
      *
      *  2.  新: 数组  ==> 旧: 文本  ==> 清空文本挂载新节点
-     *                    旧: 数组  ==> 双端对比算法
+     *                   旧: 数组  ==> 双端对比算法
      *
      * 只有最后一种情况存在双端对比算法,上面情况都是比较好处理的情况
      */
@@ -338,11 +338,11 @@ export function createRenderer(options) {
 
       // 5.1 创建新节点的索引映射表
       //     便于旧节点遍历时,判断是否存在于新节点
-      const keyTonewIndexMap = new Map()
+      const keyToNewIndexMap = new Map()
       for (let i = s2; i <= e2; i++) {
         const nextChild = c2[i]
         if (nextChild.key != null) {
-          keyTonewIndexMap.set(nextChild.key, i)
+          keyToNewIndexMap.set(nextChild.key, i)
         }
       }
 
@@ -378,7 +378,7 @@ export function createRenderer(options) {
         // 获取旧节点在新节点的位置
         let newIndex
         if (prevChild.key != null) {
-          newIndex = keyTonewIndexMap.get(prevChild.key)
+          newIndex = keyToNewIndexMap.get(prevChild.key)
         } else {
           for (let j = s2; j <= e2; j++) {
             if (isSameNodeVNodeType(c1[i], c2[j])) {
