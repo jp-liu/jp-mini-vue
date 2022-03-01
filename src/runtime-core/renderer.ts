@@ -6,6 +6,7 @@ import { PublicInstanceProxyHandlers } from './componentPublicInstance'
 import { h } from '.'
 import { effect } from '../reactivey/effect'
 import { keys } from '../shared'
+import { shouldUpdateComponent } from './componentUpdateUtils'
 
 /**
  * @description 通过外部定义创建渲染器,达到渲染不同平台元素
@@ -87,13 +88,21 @@ export function createRenderer(options) {
     parentComponent,
     anchor
   ) {
-    // 1.挂载组件
-    mountComponent(n2, container, parentComponent, anchor)
+    if (!n1) {
+      // 1.挂载组件
+      mountComponent(n2, container, parentComponent, anchor)
+    } else {
+      // 2.更新组件
+      updateComponent(n1, n2)
+    }
   }
 
   function mountComponent(n2: any, container: any, parentComponent, anchor) {
-    // 1.创建组件实例
-    const instance = createComponentInstance(n2, parentComponent)
+    // 1.创建组件实例,保存于虚拟节点,用于后续`diff`获取组件实例
+    const instance = (n2.component = createComponentInstance(
+      n2,
+      parentComponent
+    ))
 
     // 2.初始化组件状态
     setupComponent(instance)
@@ -105,8 +114,24 @@ export function createRenderer(options) {
     setupRenderEffect(instance, container, anchor)
   }
 
+  function updateComponent(n1, n2) {
+    // 1.获取组件实例
+    const instance = (n2.component = n1.component)
+    if (shouldUpdateComponent(n1, n2)) {
+      // 2.组件更新时保留对应信息
+      instance.next = n2
+      // 3.更新组件, 需要调用组件的`render`生成新的虚拟节点进行`diff`
+      instance.update()
+    } else {
+      // 4.当父组件仅更新自己内容,没有影响子组件的时候,无需触发组件更新逻辑,子组件自身处理更新逻辑即可
+      n2.el = n1.el
+      n2.vnode = n2
+    }
+  }
+
   function setupRenderEffect(instance, container, anchor) {
-    effect(() => {
+    // 保留组件更新函数,用于组件更新`diff`
+    instance.update = effect(() => {
       // @Tips: 第一次加载
       if (!instance.isMounted) {
         // 1.调用渲染函数,获取组件虚拟节点树,绑定`this`为代理对象,实现`render`函数中访问组件状态
@@ -126,6 +151,12 @@ export function createRenderer(options) {
       }
       // @Tips: 更新
       else {
+        // 0.组件更新逻辑
+        const { next: nextVNode, vnode: prevVNode } = instance
+        if (nextVNode) {
+          nextVNode.el = prevVNode.el
+          updateComponentPreRender(instance, nextVNode)
+        }
         // 1.获取到新的虚拟节点树
         const subTree = instance.render.call(instance.proxy, h)
 
@@ -481,6 +512,15 @@ export function createRenderer(options) {
   return {
     createApp: createAppAPI(render)
   }
+}
+
+function updateComponentPreRender(instance, nextVNode) {
+  // 1.更新虚拟节点为新节点
+  instance.vnode = nextVNode
+  // 2.获取最新的props
+  instance.props = nextVNode.props
+  // 3.重置`next`
+  instance.next = null
 }
 
 // https://en.wikipedia.org/wiki/Longest_increasing_subsequence
