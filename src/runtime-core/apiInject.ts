@@ -30,11 +30,11 @@ export function inject(key: string, defaultValue) {
 
   // 2.`value`在祖先组件的`provides`上面
   if (currentInstance) {
-    const praentProvides = currentInstance.parent.provides
+    const parentProvides = currentInstance.parent.provides
 
     // 判断是否存在当前`key`,如果没有,则判断是否采用默认值
-    if (key in praentProvides) {
-      return praentProvides[key]
+    if (key in parentProvides) {
+      return parentProvides[key]
     } else if (defaultValue) {
       if (typeof defaultValue === 'function') {
         return defaultValue()

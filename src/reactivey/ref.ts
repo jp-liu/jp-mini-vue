@@ -1,6 +1,6 @@
 import { hasChanged, isObject } from '../shared'
 import {
-  isTracting,
+  isTracking,
   ReactiveEffect,
   trackEffects,
   triggerEffects
@@ -42,7 +42,7 @@ function convert(value) {
 }
 
 function trackRefValue(ref) {
-  if (isTracting()) {
+  if (isTracking()) {
     trackEffects(ref.dep)
   }
 }

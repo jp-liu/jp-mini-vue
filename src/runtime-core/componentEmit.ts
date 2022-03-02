@@ -1,4 +1,4 @@
-import { camelize, toHanderKey } from '../shared/index'
+import { camelize, toHandlerKey } from '../shared/index'
 
 /**
  * @tips 1.`emit`的事件,其实触发的还是组件本身,只是方法定义,放在了父组件上
@@ -7,7 +7,7 @@ import { camelize, toHanderKey } from '../shared/index'
  */
 export function emit(instance, event) {
   // 1.处理事件名称
-  const handlerName = toHanderKey(camelize(event))
+  const handlerName = toHandlerKey(camelize(event))
 
   // 2.获取函数定义,如果存在,则调用
   const { props } = instance

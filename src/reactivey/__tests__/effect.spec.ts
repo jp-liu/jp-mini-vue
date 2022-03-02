@@ -18,6 +18,27 @@ describe('effect', () => {
     expect(nextAge).toBe(12)
   })
 
+  it('run time debounce', () => {
+    const info: any = {}
+    const user = reactive({
+      name: '赵无双',
+      age: 10
+    })
+
+    const fn = jest.fn(() => {
+      info.name = user.name
+      info.age = user.age
+    })
+
+    effect(fn)
+    expect(fn).toHaveBeenCalledTimes(1)
+    user.name = '娃哈哈'
+    user.age = 11
+    expect(fn).toHaveBeenCalledTimes(3)
+    expect(info.name).toBe('娃哈哈')
+    expect(info.age).toBe(11)
+  })
+
   it('nested reactive effect', () => {
     let dummy
     const obj = reactive({ foo: { bar: 1 } })
@@ -45,12 +66,12 @@ describe('effect', () => {
     expect(foo).toBe(12)
   })
 
-  it('shceduler', () => {
-    // 1.effect 可以指定第二个参数,包括 shceduler 函数
-    // 2.初次调用 effect 还是会直接调用 fn,后续的响应触发,交由 shceduler 执行
+  it('scheduler', () => {
+    // 1.effect 可以指定第二个参数,包括 scheduler 函数
+    // 2.初次调用 effect 还是会直接调用 fn,后续的响应触发,交由 scheduler 执行
     let dummy
     let run: any
-    const shceduler = jest.fn(() => {
+    const scheduler = jest.fn(() => {
       run = runner
     })
 
@@ -60,13 +81,13 @@ describe('effect', () => {
         dummy = foo.bar
         return 'test'
       },
-      { shceduler }
+      { scheduler: scheduler }
     )
 
-    expect(shceduler).not.toHaveBeenCalled()
+    expect(scheduler).not.toHaveBeenCalled()
     expect(dummy).toBe(1)
     foo.bar++
-    expect(shceduler).toHaveBeenCalledTimes(1)
+    expect(scheduler).toHaveBeenCalledTimes(1)
     expect(dummy).toBe(1)
     expect(run()).toBe('test')
     expect(dummy).toBe(2)

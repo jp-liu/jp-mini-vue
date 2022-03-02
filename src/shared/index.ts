@@ -20,6 +20,6 @@ export const capitalize = (str: string) => {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
-export const toHanderKey = (str: string) => {
+export const toHandlerKey = (str: string) => {
   return str ? `on${capitalize(str)}` : ''
 }

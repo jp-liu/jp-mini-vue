@@ -12,14 +12,14 @@ const targetMap = new WeakMap()
 export class ReactiveEffect {
   private _fn: () => void
   // 响应式第一次触发后,让用户自己决定后续的 set 操作要做的事情
-  public shceduler?: () => void | undefined
+  public scheduler?: () => void | undefined
   onStop?: () => void
   deps: any[] = []
-  active: boolean = true
+  active: boolean = true // 是否被执行了 `stop` 退出了响应式系统的收集
 
-  constructor(fn: () => void, shceduler?: () => void) {
+  constructor(fn: () => void, scheduler?: () => void) {
     this._fn = fn
-    this.shceduler = shceduler
+    this.scheduler = scheduler
   }
 
   run() {
@@ -33,7 +33,7 @@ export class ReactiveEffect {
     shouldTrack = true
     // 2.设置依赖收集的目标
     activeEffect = this
-    // 3.执行`fn`,调用内部的`get`的时候,就可以收集`fn`了
+    // 3.执行`fn`,调用内部的`get`的时候,就可以收集`activeEffect`了
     const result = this._fn()
     // 4.关闭依赖收集开关
     shouldTrack = false
@@ -45,7 +45,7 @@ export class ReactiveEffect {
   stop() {
     // 是否在响应式系统中
     if (this.active) {
-      clearupEffect(this)
+      cleanupEffect(this)
       // 如果给了回调,则进行回调
       if (this.onStop) this.onStop()
       this.active = false
@@ -59,7 +59,7 @@ export class ReactiveEffect {
  */
 export function effect(fn, options?) {
   // 1.初始化
-  const _effect = new ReactiveEffect(fn, options?.shceduler)
+  const _effect = new ReactiveEffect(fn, options?.scheduler)
 
   extend(_effect, options)
 
@@ -76,7 +76,7 @@ export function stop(runner) {
   runner.effect.stop()
 }
 
-function clearupEffect(effect: ReactiveEffect) {
+function cleanupEffect(effect: ReactiveEffect) {
   effect.deps.forEach(dep => {
     dep.delete(effect)
   })
@@ -90,7 +90,7 @@ function clearupEffect(effect: ReactiveEffect) {
  */
 export function track(target, key) {
   // @desc: 不是收集状态,直接返回
-  if (!isTracting()) return
+  if (!isTracking()) return
 
   // console.log(`触发 track -> target: ${target} key:${key}`)
 
@@ -123,7 +123,7 @@ export function trackEffects(dep) {
   }
 }
 
-export function isTracting() {
+export function isTracking() {
   return shouldTrack && activeEffect
 }
 
@@ -144,9 +144,9 @@ export function trigger(target, key) {
 
 export function triggerEffects(dep) {
   for (const effect of dep) {
-    if (effect.shceduler) {
+    if (effect.scheduler) {
       // 如果用户需要自己拥有操作权,则采用这个方案
-      effect.shceduler()
+      effect.scheduler()
     } else {
       effect.run()
     }
