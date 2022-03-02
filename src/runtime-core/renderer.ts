@@ -137,6 +137,7 @@ export function createRenderer(options) {
       if (!instance.isMounted) {
         // 1.调用渲染函数,获取组件虚拟节点树,绑定`this`为代理对象,实现`render`函数中访问组件状态
         const subTree = instance.render.call(instance.proxy, h)
+        console.log(instance.type, '创建')
 
         // 2.继续`patch`,递归挂载组件
         patch(null, subTree, container, instance, anchor)
@@ -153,7 +154,6 @@ export function createRenderer(options) {
       // @Tips: 更新
       else {
         // 0.组件更新逻辑
-        debugger
         const { next: nextVNode, vnode: prevVNode } = instance
 
         if (nextVNode) {
@@ -162,6 +162,7 @@ export function createRenderer(options) {
         }
         // 1.获取到新的虚拟节点树
         const subTree = instance.render.call(instance.proxy, h)
+        console.log(instance.type, '更新')
 
         // 2.获取旧的虚拟节点树
         const prevSubTree = instance.subTree
@@ -173,20 +174,21 @@ export function createRenderer(options) {
         instance.subTree = subTree
       }
     }
+
     // 保留组件更新函数,用于组件更新`diff`
-    debugger
     instance.update = effect(componentUpdateFn, {
       // 同步执行`effect`太耗费性能,比如 for 循环一个 ref 100, 1000, 10000 次,什么逻辑都有可能出现
       // 一个组件内有太多响应式数据了,所以我们需要将组件更新函数,放到异步队列中,当同步内容计算完毕之后,
       // 在一次性将所有变更渲染到视图中,避免重复更新
       // 面试题:
       // nextTick的原理,以及缘由,因为组件更新为异步,所以在同步代码计算完毕之后,视图和组件实例还没同步,
-      // 在一次 tick 也就是微任务之后,才会同步完成,所以要操作最新的视图和实例,需要 `nextTick`
-      shceduler: () => {
+      // 再一次 tick 也就是微任务之后,才会同步完成,所以要操作最新的视图和实例,需要 `nextTick`
+      scheduler: () => {
         console.log('update -- scheduler')
         queueJob(instance.update)
       }
     })
+    instance.update.component = instance
   }
 
   function processElement(

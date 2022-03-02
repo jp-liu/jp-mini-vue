@@ -9,11 +9,10 @@ export default {
   setup() {
     const msg = ref('123')
     const count = ref(1)
-    window.msg = msg
+    // window.msg = msg
 
     const changeChildProps = () => {
       msg.value = '456'
-      debugger
     }
 
     const changeCount = () => {
@@ -24,7 +23,7 @@ export default {
   },
 
   render() {
-    return h('div', {}, [
+    const a = h('div', { id: 'app' }, [
       h('div', {}, '你好'),
       h(
         'button',
@@ -45,5 +44,6 @@ export default {
       ),
       h('p', {}, 'count: ' + this.count)
     ])
+    return a
   }
 }

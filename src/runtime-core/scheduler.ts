@@ -31,6 +31,7 @@ function flushJobs() {
   isFlushPending = false
   let job
   while ((job = queue.shift())) {
+    console.log(job?.component)
     job && job()
   }
 }
