@@ -15,6 +15,7 @@ module.exports = {
     { name: 'vue' },
     { name: 'shared' },
     { name: 'reactivity' },
+    { name: 'compiler-core' },
     { name: 'runtime-core' },
     { name: 'runtime-dom' }
   ],
