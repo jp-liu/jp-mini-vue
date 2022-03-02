@@ -13,6 +13,7 @@ export default {
 
     const changeChildProps = () => {
       msg.value = '456'
+      debugger
     }
 
     const changeCount = () => {
@@ -30,7 +31,7 @@ export default {
         {
           onClick: this.changeChildProps
         },
-        'change child props'
+        'change child props' + this.msg
       ),
       h(Child, {
         msg: this.msg
