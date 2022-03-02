@@ -59,7 +59,7 @@ export class ReactiveEffect {
  */
 export function effect(
   fn,
-  options?: { shceduler?: () => void; onStop?: () => void }
+  options?: { scheduler?: () => void; onStop?: () => void }
 ) {
   // 1.初始化
   const _effect = new ReactiveEffect(fn, options?.scheduler)
@@ -70,7 +70,7 @@ export function effect(
   _effect.run()
 
   // 3.返回`runner`函数
-  const runner: any = _effect.run.bind(activeEffect)
+  const runner: any = _effect.run.bind(_effect)
   runner.effect = _effect
   return runner
 }
