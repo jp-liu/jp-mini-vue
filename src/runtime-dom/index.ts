@@ -54,6 +54,7 @@ const renderer: any = createRenderer({
 })
 
 export * from '../runtime-core'
+// 暴露 `DOM` 的操作 `API` 的渲染器
 export function createApp(...args) {
   return renderer.createApp(...args)
 }

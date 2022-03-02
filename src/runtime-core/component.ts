@@ -20,6 +20,7 @@ export function createComponentInstance(vnode, parent) {
     parent,
     isMounted: false,
     subTree: null,
+    next: null,
     emit: () => {}
   }
 

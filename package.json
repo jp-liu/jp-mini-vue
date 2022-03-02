@@ -10,7 +10,12 @@
     "prepare": "husky install",
     "commit": "git-cz"
   },
-  "keywords": [],
+  "keywords": [
+    "vue",
+    "vue3",
+    "mini-vue",
+    "study"
+  ],
   "author": "jp-liu <fortune_coder@foxmail.com>",
   "license": "ISC",
   "devDependencies": {

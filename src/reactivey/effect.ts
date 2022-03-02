@@ -57,7 +57,10 @@ export class ReactiveEffect {
  * @description 副作用函数,收集依赖
  * @param { Function } fn
  */
-export function effect(fn, options?) {
+export function effect(
+  fn,
+  options?: { shceduler?: () => void; onStop?: () => void }
+) {
   // 1.初始化
   const _effect = new ReactiveEffect(fn, options?.scheduler)
 
