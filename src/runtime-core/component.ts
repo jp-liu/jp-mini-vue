@@ -1,5 +1,5 @@
-import { shallowReadonly } from '../reactivey/reactive'
-import { proxyRefs } from '../reactivey/ref'
+import { shallowReadonly } from '../reactivity/reactive'
+import { proxyRefs } from '../reactivity/ref'
 import { emit } from './componentEmit'
 import { initProps } from './componentProps'
 import { initSlots } from './componentSlots'
