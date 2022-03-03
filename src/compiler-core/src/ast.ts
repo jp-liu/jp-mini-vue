@@ -1,5 +1,7 @@
-export const enum NodeType {
+export const enum NodeTypes {
   ROOT,
   INTERPOLATION,
-  SIMPLE_EXPRESSION
+  SIMPLE_EXPRESSION,
+  ELEMENT,
+  TEXT
 }
