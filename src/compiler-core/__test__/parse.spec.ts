@@ -27,19 +27,8 @@ describe('parse', () => {
       const element = ast.children[0]
       expect(element).toStrictEqual({
         type: NodeTypes.ELEMENT,
-        tag: 'div'
-      })
-    })
-  })
-
-  describe('parse text,解析文本节点', () => {
-    test('simple text', () => {
-      // <div></div>
-      const ast = baseParse('some text')
-      const text = ast.children[0]
-      expect(text).toStrictEqual({
-        type: NodeTypes.TEXT,
-        content: 'some text'
+        tag: 'div',
+        children: []
       })
     })
 
@@ -60,27 +49,72 @@ describe('parse', () => {
       })
     })
 
-    // test('element with interpolation and text', () => {
-    //   const ast = baseParse('<div>hi,{{ msg }}</div>')
-    //   const element = ast.children[0]
+    test('element with interpolation and text', () => {
+      const ast = baseParse('<div>hi,{{ msg }}</div>')
+      const element = ast.children[0]
 
-    //   expect(element).toStrictEqual({
-    //     type: NodeTypes.ELEMENT,
-    //     tag: 'div',
-    //     children: [
-    //       {
-    //         type: NodeTypes.TEXT,
-    //         content: 'hi,'
-    //       },
-    //       {
-    //         type: NodeTypes.INTERPOLATION,
-    //         content: {
-    //           type: NodeTypes.SIMPLE_EXPRESSION,
-    //           content: 'msg'
-    //         }
-    //       }
-    //     ]
-    //   })
-    // })
+      expect(element).toStrictEqual({
+        type: NodeTypes.ELEMENT,
+        tag: 'div',
+        children: [
+          {
+            type: NodeTypes.TEXT,
+            content: 'hi,'
+          },
+          {
+            type: NodeTypes.INTERPOLATION,
+            content: {
+              type: NodeTypes.SIMPLE_EXPRESSION,
+              content: 'msg'
+            }
+          }
+        ]
+      })
+    })
+
+    test('Nested element ', () => {
+      const ast = baseParse('<div><p>hi</p>{{message}}</div>')
+      expect(ast.children[0]).toStrictEqual({
+        type: NodeTypes.ELEMENT,
+        tag: 'div',
+        children: [
+          {
+            type: NodeTypes.ELEMENT,
+            tag: 'p',
+            children: [
+              {
+                type: NodeTypes.TEXT,
+                content: 'hi'
+              }
+            ]
+          },
+          {
+            type: NodeTypes.INTERPOLATION,
+            content: {
+              type: NodeTypes.SIMPLE_EXPRESSION,
+              content: 'message'
+            }
+          }
+        ]
+      })
+    })
+
+    test('should throw error when lack end tag,没有结束标签需要抛出异常', () => {
+      expect(() => {
+        baseParse('<div><span></div>')
+      }).toThrow('缺少结束标签:span')
+    })
+  })
+
+  describe('parse text,解析文本节点', () => {
+    test('simple text', () => {
+      // <div></div>
+      const ast = baseParse('some text')
+      const text = ast.children[0]
+      expect(text).toStrictEqual({
+        type: NodeTypes.TEXT,
+        content: 'some text'
+      })
+    })
   })
 })

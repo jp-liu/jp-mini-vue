@@ -1,4 +1,4 @@
-import { NodeType } from './ast'
+import { NodeTypes } from './ast'
 
 /**
  * @description 开始和结束标签枚举
@@ -19,7 +19,7 @@ interface ParseContext {
  * @description `AST`根节点
  */
 interface RootNode {
-  type: NodeType
+  type: NodeTypes
   // eslint-disable-next-line no-use-before-define
   children: NodeChildren
 }
@@ -28,7 +28,7 @@ interface RootNode {
  * @description 元素节点
  */
 interface ElementNode {
-  type: NodeType.ELEMENT
+  type: NodeTypes.ELEMENT
   tag: string
   // eslint-disable-next-line no-use-before-define
   children: NodeChildren
@@ -38,9 +38,9 @@ interface ElementNode {
  * @description 插值语法节点
  */
 interface Interpolation {
-  type: NodeType.INTERPOLATION
+  type: NodeTypes.INTERPOLATION
   content: {
-    type: NodeType.SIMPLE_EXPRESSION
+    type: NodeTypes.SIMPLE_EXPRESSION
     content: string
   }
 }
@@ -49,7 +49,7 @@ interface Interpolation {
  * @description 文本节点
  */
 interface TextNode {
-  type: NodeType.TEXT
+  type: NodeTypes.TEXT
   content: string
 }
 
@@ -73,7 +73,7 @@ export function baseParse(content: string) {
 
   // 2.创建`AST`根节点
   // 3.处理内部内容
-  return createRoot(parseChildren(context))
+  return createRoot(parseChildren(context, []))
 }
 
 /**
@@ -82,7 +82,7 @@ export function baseParse(content: string) {
  */
 function createRoot(children): RootNode {
   return {
-    type: NodeType.ROOT,
+    type: NodeTypes.ROOT,
     children
   }
 }
@@ -100,13 +100,18 @@ function createParseContext(content: string): ParseContext {
 /**
  * @description 处理语法树分支节点
  * @param context 上下文对象
+ * @param ancestors 节点栈,维护当前元素节点的父子关系,主要看结尾标签是否能闭合
  */
-function parseChildren(context: ParseContext): NodeChildren {
+function parseChildren(
+  context: ParseContext,
+  ancestors: ElementNode[]
+): NodeChildren {
   // 1.创建`AST`节点树子节点数组
   const nodes: NodeChildren = []
-  const s = context.source
 
-  while (!isEnd(context)) {
+  while (!isEnd(context, ancestors)) {
+    debugger
+    const s = context.source
     let node // 树子节点
     // 2.解析小胡子语法
     if (s.startsWith('{{')) {
@@ -115,7 +120,7 @@ function parseChildren(context: ParseContext): NodeChildren {
     // 3.解析元素标签
     else if (s[0] === '<') {
       if (/[a-z]/i.test(s[1])) {
-        node = parseElement(context)
+        node = parseElement(context, ancestors)
       }
     }
     // 4.解析文本节点
@@ -131,12 +136,17 @@ function parseChildren(context: ParseContext): NodeChildren {
 /**
  * @description 是否处理完毕当前循环
  */
-function isEnd(context: ParseContext): boolean {
+function isEnd(context: ParseContext, ancestors: ElementNode[]): boolean {
   const s = context.source
 
-  // 2.如果是一个元素的结束标签,则也结束
-  if (s.startsWith('</div>')) {
-    return true
+  // 2.节点栈,判断是否闭合
+  if (s.startsWith('</')) {
+    for (let i = ancestors.length - 1; i >= 0; i--) {
+      const tag = ancestors[i].tag
+      if (tag === s.slice(2, 2 + tag.length)) {
+        return true
+      }
+    }
   }
 
   // 1.当所有字符串代码都解析完毕,`s`则为空
@@ -176,9 +186,9 @@ function parseInterpolation(context: ParseContext): Interpolation {
   advanceBy(context, variableLen + closeDelimiter.length)
 
   return {
-    type: NodeType.INTERPOLATION,
+    type: NodeTypes.INTERPOLATION,
     content: {
-      type: NodeType.SIMPLE_EXPRESSION,
+      type: NodeTypes.SIMPLE_EXPRESSION,
       content
     }
   }
@@ -188,16 +198,29 @@ function parseInterpolation(context: ParseContext): Interpolation {
  * @description 解析元素
  * @param context 上下文对象
  */
-function parseElement(context: ParseContext): ElementNode {
+function parseElement(
+  context: ParseContext,
+  ancestors: ElementNode[]
+): ElementNode {
   // 1.解析开始标签,获取标签节点信息
   const element = parseTag(context, TagType.Start)
 
-  // 2.解析标签内部内容,获取标签子节点
-  debugger
-  element.children = parseChildren(context)
+  // 2.解析标签内部内容,获取标签子节点,维护父子节点关系
+  ancestors.push(element)
+  element.children = parseChildren(context, ancestors)
+  ancestors.pop()
 
-  // 3.处理结束标签,无需节点信息了
-  parseTag(context, TagType.End)
+  // 3.需要判断是否有结束标签
+  if (
+    context.source.startsWith('</') &&
+    element.tag === context.source.slice(2, 2 + element.tag.length)
+  ) {
+    // 3.1 处理结束标签,无需节点信息了
+    parseTag(context, TagType.End)
+  } else {
+    // 3.2 没有结束标签
+    throw new Error(`缺少结束标签:${element.tag}`)
+  }
   return element
 }
 
@@ -218,7 +241,7 @@ function parseTag(context: ParseContext, tagType: TagType): ElementNode | any {
   if (tagType === TagType.End) return
 
   return {
-    type: NodeType.ELEMENT,
+    type: NodeTypes.ELEMENT,
     tag,
     children: []
   }
@@ -229,9 +252,33 @@ function parseTag(context: ParseContext, tagType: TagType): ElementNode | any {
  * @param context 上下文对象
  */
 function parseText(context: ParseContext): TextNode {
-  const content = context.source.slice(0, context.source.length)
+  // 1.默认截取全部文字
+  let endIndex = context.source.length
+  // 2.是否遇到其他标签或者插值语法
+  const endTokens = ['<', '{{']
+  for (let i = 0; i < endTokens.length; i++) {
+    const index = context.source.indexOf(endTokens[i])
+    // 2.1 判断是先出现的插值语法还是标签
+    if (index > -1 && endIndex > index) {
+      endIndex = index
+    }
+  }
+
+  const content = parseTextData(context, endIndex)
+
   return {
-    type: NodeType.TEXT,
+    type: NodeTypes.TEXT,
     content
   }
+}
+
+/**
+ * @description 处理指定数目的代码
+ * @param context 上下文对象
+ * @param length 已解析多少代码
+ */
+function parseTextData(context: ParseContext, length: number) {
+  const content = context.source.slice(0, length)
+  advanceBy(context, length)
+  return content
 }
