@@ -5,6 +5,7 @@ import { Foo } from './foo.js'
 // 实现浏览器控制台调试
 window.self = null
 export const App = {
+  name: 'App',
   // 暂时没有编译能力,使用手动的 `render` 函数
   render() {
     window.self = this
@@ -28,6 +29,7 @@ export const App = {
         footer: () => h('p', {}, 'footer')
       }
     )
+    debugger
 
     return h('div', {}, [app, foo1, foo2])
   },

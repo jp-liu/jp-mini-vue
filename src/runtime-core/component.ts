@@ -2,6 +2,7 @@ import { shallowReadonly } from '../reactivity/reactive'
 import { proxyRefs } from '../reactivity/ref'
 import { emit } from './componentEmit'
 import { initProps } from './componentProps'
+import { PublicInstanceProxyHandlers } from './componentPublicInstance'
 import { initSlots } from './componentSlots'
 
 /**
@@ -30,7 +31,6 @@ export function createComponentInstance(vnode, parent) {
 }
 
 export function setupComponent(instance) {
-  // TODO
   // 1.initProps
   initProps(instance, instance.vnode.props)
   // 2.initSlots
@@ -57,6 +57,9 @@ function setupStateFulComponent(instance: any) {
     setCurrentInstance(null)
     handleSetupResult(instance, proxyRefs(setupResult))
   }
+
+  // 4.状态处理之后,创建组件代理对象,访问组件实例的状态信息
+  instance.proxy = new Proxy({ _: instance }, PublicInstanceProxyHandlers)
 }
 
 function handleSetupResult(instance, setupResult: any) {

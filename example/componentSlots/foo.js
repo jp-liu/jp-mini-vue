@@ -1,6 +1,7 @@
 import { h, renderSlot } from '../../lib/jp-liu-mini-vue.esm.js'
 
 export const Foo = {
+  name: 'Foo',
   setup(props, { emit }) {},
   render() {
     const foo = h('p', {}, 'slots=>')

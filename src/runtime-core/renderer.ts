@@ -108,15 +108,11 @@ export function createRenderer(options) {
     // 2.初始化组件状态
     setupComponent(instance)
 
-    // 3.获取状态之后,创建组件代理对象,访问组件实例
-    instance.proxy = new Proxy({ _: instance }, PublicInstanceProxyHandlers)
-
-    // 4.挂载组件
+    // 3.挂载组件
     setupRenderEffect(instance, container, anchor)
   }
 
   function updateComponent(n1, n2) {
-    debugger
     // 1.获取组件实例
     const instance = (n2.component = n1.component)
     if (shouldUpdateComponent(n1, n2)) {

@@ -7,7 +7,7 @@ export function renderSlot(slots, key, props) {
   if (!slot || typeof slot !== 'function') {
     // 没有对应插槽的时候,返回空,`patch`的时候,就不知道类型,就啥也没做了
     console.warn('There is no current slot')
-    return
+    return {}
   }
 
   if (slot && typeof slot === 'function') {
