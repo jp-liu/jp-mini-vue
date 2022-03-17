@@ -11,14 +11,14 @@ const enum TagType {
 /**
  * @description 上下文对象
  */
-interface ParseContext {
+export interface ParseContext {
   source: string
 }
 
 /**
  * @description `AST`根节点
  */
-interface RootNode {
+export interface RootNode {
   type: NodeTypes
   // eslint-disable-next-line no-use-before-define
   children: NodeChildren
@@ -27,7 +27,7 @@ interface RootNode {
 /**
  * @description 元素节点
  */
-interface ElementNode {
+export interface ElementNode {
   type: NodeTypes.ELEMENT
   tag: string
   // eslint-disable-next-line no-use-before-define
@@ -37,7 +37,7 @@ interface ElementNode {
 /**
  * @description 插值语法节点
  */
-interface Interpolation {
+export interface Interpolation {
   type: NodeTypes.INTERPOLATION
   content: {
     type: NodeTypes.SIMPLE_EXPRESSION
@@ -48,7 +48,7 @@ interface Interpolation {
 /**
  * @description 文本节点
  */
-interface TextNode {
+export interface TextNode {
   type: NodeTypes.TEXT
   content: string
 }
@@ -56,7 +56,7 @@ interface TextNode {
 /**
  * @description 节点类型的联合
  */
-type NodeUnion = ElementNode | TextNode | Interpolation
+export type NodeUnion = ElementNode | TextNode | Interpolation
 
 /**
  * @description 节点类型组成的数组
