@@ -19,11 +19,12 @@ export interface ParseContext {
  * @description `AST`根节点
  */
 export interface RootNode {
-  type: NodeTypes
+  type: NodeTypes.ROOT
   // eslint-disable-next-line no-use-before-define
   codegenNode?: NodeUnion
   // eslint-disable-next-line no-use-before-define
-  children: NodeChildren
+  children: NodeChildren,
+  helpers: symbol[]
 }
 
 /**
@@ -36,15 +37,21 @@ export interface ElementNode {
   children: NodeChildren
 }
 
+
+/**
+ * @description 表达式节点
+ */
+ export interface SimpleExpression {
+  type: NodeTypes.SIMPLE_EXPRESSION
+  content: string
+}
+
 /**
  * @description 插值语法节点
  */
 export interface Interpolation {
   type: NodeTypes.INTERPOLATION
-  content: {
-    type: NodeTypes.SIMPLE_EXPRESSION
-    content: string
-  }
+  content: SimpleExpression
 }
 
 /**
@@ -58,7 +65,7 @@ export interface TextNode {
 /**
  * @description 节点类型的联合
  */
-export type NodeUnion = ElementNode | TextNode | Interpolation
+export type NodeUnion = ElementNode | TextNode | Interpolation | SimpleExpression
 
 /**
  * @description 节点类型组成的数组
@@ -86,7 +93,8 @@ function createRoot(children: NodeChildren): RootNode {
   return {
     type: NodeTypes.ROOT,
     children,
-    codegenNode: undefined
+    codegenNode: undefined,
+    helpers: []
   }
 }
 
