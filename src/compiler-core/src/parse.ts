@@ -21,6 +21,8 @@ export interface ParseContext {
 export interface RootNode {
   type: NodeTypes
   // eslint-disable-next-line no-use-before-define
+  codegenNode?: NodeUnion
+  // eslint-disable-next-line no-use-before-define
   children: NodeChildren
 }
 
@@ -61,7 +63,7 @@ export type NodeUnion = ElementNode | TextNode | Interpolation
 /**
  * @description 节点类型组成的数组
  */
-type NodeChildren = NodeUnion[]
+export type NodeChildren = NodeUnion[]
 
 /**
  * @description 解析字符串,获取`AST`抽象语法树
@@ -80,10 +82,11 @@ export function baseParse(content: string) {
  * @description 创建`AST`语法树根节点
  * @param children 子节点
  */
-function createRoot(children): RootNode {
+function createRoot(children: NodeChildren): RootNode {
   return {
     type: NodeTypes.ROOT,
-    children
+    children,
+    codegenNode: undefined
   }
 }
 
