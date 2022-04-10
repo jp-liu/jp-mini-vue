@@ -8,7 +8,7 @@ describe('transform for ast', () => {
     const ast = baseParse('<div>hi,{{ message }}</div>')
     const plugin = node => {
       if (node.type === NodeTypes.TEXT) {
-        ;(node as TextNode).content += 'mini-vue'
+        node.content += 'mini-vue'
       }
     }
     transform(ast, {

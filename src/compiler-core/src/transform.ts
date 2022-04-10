@@ -2,13 +2,21 @@ import { NodeTypes } from './ast'
 import { ElementNode, NodeUnion, RootNode } from './parse'
 import { TO_DISPLAY_STRING } from './runtime-helper'
 
-type TransformContext = ReturnType<typeof createTransformContext>
+type NodeTransform = ((
+  node: RootNode | NodeUnion,
+  // eslint-disable-next-line no-use-before-define
+  context: TransformContext
+) => void | (() => void))
+
+export interface TransformContext {
+  root: RootNode,
+  nodeTransforms: NodeTransform[]
+  helpers: Set<symbol>
+  helper(key: symbol): void
+}
 
 interface TransformOptions {
-  nodeTransforms?: ((
-    node: RootNode | NodeUnion,
-    context: TransformContext
-  ) => void)[]
+  nodeTransforms?: NodeTransform[]
 }
 
 export function transform(root: RootNode, options: TransformOptions = {}) {
@@ -39,7 +47,12 @@ function traverseNode(
   context: TransformContext
 ) {
   const { nodeTransforms } = context
-  nodeTransforms.forEach(fn => fn(node, context))
+  const exitFns: (() => void)[] = []
+  for (let i = 0; i < nodeTransforms.length; i++) {
+    const transform = nodeTransforms[i]
+    const onExit = transform(node, context)
+    onExit && exitFns.push(onExit)
+  }
 
   switch (node.type) {
     case NodeTypes.INTERPOLATION:
@@ -49,6 +62,10 @@ function traverseNode(
     case NodeTypes.ELEMENT:
       traverseChildren(node, context)
       break;
+  }
+  let i = exitFns.length
+  while (i--) {
+    exitFns[i]()
   }
 }
 
@@ -66,7 +83,11 @@ function createRootCodegenNode(root: RootNode, context: TransformContext) {
   const { children } = root
   const firstChild = children[0]
   if (firstChild) {
-    root.codegenNode = firstChild
+    if (firstChild.type === NodeTypes.ELEMENT) {
+      root.codegenNode = firstChild.codegenNode
+    } else {
+      root.codegenNode = firstChild
+    }
   }
 }
 

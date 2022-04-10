@@ -1,6 +1,7 @@
+import { isString } from "../../shared";
 import { NodeTypes } from "./ast";
-import { Interpolation, NodeUnion, RootNode, SimpleExpression, TextNode } from "./parse";
-import { helperMapName, TO_DISPLAY_STRING } from "./runtime-helper";
+import { CompoundNode, ElementNode, Interpolation, NodeUnion, RootNode, SimpleExpression, TextNode } from "./parse";
+import { CREATE_ELEMENT_VNODE, helperMapName, TO_DISPLAY_STRING } from "./runtime-helper";
 
 interface GenerateOptions { }
 interface GenerateContext {
@@ -30,6 +31,7 @@ export function generate(ast: RootNode, options: GenerateOptions = {}) {
 
 function genFunctionPreamble(ast: RootNode, context: GenerateContext) {
   const { push } = context
+  
   const VueBinding = 'Vue';
   const aliasHelper = (s: symbol) => `${helperMapName[s]}: _${helperMapName[s]}`;
   if (ast.helpers.length) {
@@ -45,16 +47,17 @@ function genNode(node: NodeUnion, context: GenerateContext) {
       genText(node, context);
       break;
     case NodeTypes.ELEMENT:
-      // return genElement(node);
-      return ''
+      genElement(node, context);
+      break
+    case NodeTypes.COMPOUND_EXPRESSION:
+      genCompoundExpression(node, context)
+      break
     case NodeTypes.INTERPOLATION:
       genInterpolation(node, context);
       break;
     case NodeTypes.SIMPLE_EXPRESSION:
       genExpression(node, context)
       break;
-
-
   }
 }
 
@@ -87,8 +90,52 @@ function genInterpolation(node: Interpolation, context: GenerateContext) {
 
 function genExpression(node: SimpleExpression, context: GenerateContext) {
   const { push } = context
-  console.log(node);
   
   push(`${node.content}`)
+}
+
+function genElement(node: ElementNode, context: GenerateContext) {
+  const { push, helper } = context
+  const { tag, props, children } = node
+  
+  push(`_${helper(CREATE_ELEMENT_VNODE)}(`)
+  genNodeList(genNullable([tag, props, children]), context)
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i];
+    genNode(child, context)
+  }
+  push(')')
+}
+
+function genCompoundExpression(node: CompoundNode, context: GenerateContext) {
+  const { push } = context
+  const { children } = node
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i]
+    if (isString(child)) {
+      push(child as string)
+    } else {
+      genNode(child as NodeUnion, context)
+    }
+  }
+}
+
+function genNullable(args: any[]) {
+  return args.map(arg => arg || 'null')
+}
+
+function genNodeList(nodes: any[], context: GenerateContext) {
+  const {push} = context
+  for (let i = 0; i < nodes.length; i++) {
+    const node = nodes[i];
+    if (isString(node)) {
+      push(node)
+    } else {
+      genNode(node, context)
+    }
+    if (i !== nodes.length - 1) {
+      push(', ')
+    }
+  }
 }
 

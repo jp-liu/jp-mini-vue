@@ -28,20 +28,29 @@ export interface RootNode {
 }
 
 /**
+ * @description 元素节点属性
+ */
+export interface ElementProps {
+  [key: string]: string
+}
+
+/**
  * @description 元素节点
  */
 export interface ElementNode {
   type: NodeTypes.ELEMENT
   tag: string
+  props: ElementProps | null
   // eslint-disable-next-line no-use-before-define
   children: NodeChildren
+  // eslint-disable-next-line no-use-before-define
+  codegenNode?: NodeUnion
 }
-
 
 /**
  * @description 表达式节点
  */
- export interface SimpleExpression {
+export interface SimpleExpression {
   type: NodeTypes.SIMPLE_EXPRESSION
   content: string
 }
@@ -63,9 +72,17 @@ export interface TextNode {
 }
 
 /**
+ * @description 复合文本节点
+ */
+export interface CompoundNode {
+  type: NodeTypes.COMPOUND_EXPRESSION
+  children: (Interpolation | TextNode | ' + ')[]
+}
+
+/**
  * @description 节点类型的联合
  */
-export type NodeUnion = ElementNode | TextNode | Interpolation | SimpleExpression
+export type NodeUnion = ElementNode | TextNode | Interpolation | SimpleExpression | CompoundNode
 
 /**
  * @description 节点类型组成的数组
@@ -121,7 +138,6 @@ function parseChildren(
   const nodes: NodeChildren = []
 
   while (!isEnd(context, ancestors)) {
-    debugger
     const s = context.source
     let node // 树子节点
     // 2.解析小胡子语法
@@ -154,7 +170,7 @@ function isEnd(context: ParseContext, ancestors: ElementNode[]): boolean {
   if (s.startsWith('</')) {
     for (let i = ancestors.length - 1; i >= 0; i--) {
       const tag = ancestors[i].tag
-      if (tag === s.slice(2, 2 + tag.length)) {
+      if (tag === getTagName(s, tag)) {
         return true
       }
     }
@@ -164,13 +180,17 @@ function isEnd(context: ParseContext, ancestors: ElementNode[]): boolean {
   return !s
 }
 
+function getTagName(s: string, tag: string) {
+  return s.slice(2, 2 + tag.length)
+}
+
 /**
  * @description 创建游标辅助函数,解析一段记录一段(被解析的已经丢弃)
  * @param context 上下文对象
  * @param numberOfCharacters 已解析进度
  */
 function advanceBy(context: ParseContext, numberOfCharacters: number) {
-  console.log('推进解析进度', context, numberOfCharacters)
+  // console.log('推进解析进度', context, numberOfCharacters)
   context.source = context.source.slice(numberOfCharacters)
 }
 
@@ -224,7 +244,7 @@ function parseElement(
   // 3.需要判断是否有结束标签
   if (
     context.source.startsWith('</') &&
-    element.tag === context.source.slice(2, 2 + element.tag.length)
+    element.tag === getTagName(context.source, element.tag)
   ) {
     // 3.1 处理结束标签,无需节点信息了
     parseTag(context, TagType.End)
