@@ -1,6 +1,7 @@
 module.exports = {
   extends: '@antfu',
   rules: {
+    'no-console': 0,
     'no-debugger': process.NODE_ENV === 'production' ? 2 : 0,
     'camelcase': 0,
     'no-void': 0,
@@ -12,5 +13,6 @@ module.exports = {
       // catches unused variables but not args.
       { varsIgnorePattern: '.*', args: 'none' },
     ],
+    'no-new-func': 0,
   },
 }

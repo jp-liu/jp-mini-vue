@@ -10,6 +10,14 @@ import { initSlots } from './componentSlots'
  */
 let currentInstance = null
 
+/**
+ * 注入编译器
+ */
+let compiler
+export function registerRuntimeComplier(_compiler) {
+  compiler = _compiler
+}
+
 export function createComponentInstance(vnode, parent) {
   const component: any = {
     vnode,
@@ -22,7 +30,7 @@ export function createComponentInstance(vnode, parent) {
     isMounted: false,
     subTree: null,
     next: null,
-    emit: () => {}
+    emit: () => {},
   }
 
   component.emit = emit
@@ -51,7 +59,7 @@ function setupStateFulComponent(instance: any) {
     // 设置全局实例对象,用于`getCurrentInstance`
     setCurrentInstance(instance)
     const setupResult = setup(shallowReadonly(instance.props), {
-      emit: instance.emit.bind(null, instance)
+      emit: instance.emit.bind(null, instance),
     })
     // 释放实例
     setCurrentInstance(null)
@@ -64,9 +72,9 @@ function setupStateFulComponent(instance: any) {
 
 function handleSetupResult(instance, setupResult: any) {
   // 1.判断是`setup`给的渲染函数,还是各种状态
-  if (typeof setupResult === 'object') {
+  if (typeof setupResult === 'object')
     instance.setupState = setupResult
-  }
+
   // TODO => 渲染函数的情况
 
   // 2.获取了组件的状态之后,进行最后一步处理
@@ -79,9 +87,10 @@ function finishComponentSetup(instance: any) {
   // 1.判断是否给定`render`渲染函数
   //   - 给了,则用用户的
   //   - 没给,自己根据情况创建 => TODO
-  if (Component.render) {
+  if (Component.render)
     instance.render = Component.render
-  }
+  else if (compiler && Component.template)
+    instance.render = compiler(Component.template)
 
   // 到这里, 组件的状态,渲染函数已经全部获取到了,可以进行渲染了
 }

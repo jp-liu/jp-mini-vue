@@ -1,11 +1,9 @@
-import { createAppAPI } from './createAppApi'
 import { ShapeFlag } from '../shared/shapeFlag'
-import { Fragment, Text } from './vnode'
-import { createComponentInstance, setupComponent } from './component'
-import { PublicInstanceProxyHandlers } from './componentPublicInstance'
-import { h } from '.'
 import { effect } from '../reactivity/effect'
 import { keys } from '../shared'
+import { createAppAPI } from './createAppApi'
+import { Fragment, Text } from './vnode'
+import { createComponentInstance, setupComponent } from './component'
 import { shouldUpdateComponent } from './componentUpdateUtils'
 import { queueJob } from './scheduler'
 
@@ -22,7 +20,7 @@ export function createRenderer(options) {
     patchProp: hostPatchProp,
     insert: hostInsert,
     remove: hostRemove,
-    setElementText: hostSetElementText
+    setElementText: hostSetElementText,
   } = options
 
   // 提供给外部的启动渲染方法
@@ -57,7 +55,8 @@ export function createRenderer(options) {
         if (shapeFlag & ShapeFlag.ELEMENT) {
           // 1.1 元素
           processElement(n1, n2, container, parentComponent, anchor)
-        } else if (shapeFlag & ShapeFlag.STATEFUL_COMPONENT) {
+        }
+        else if (shapeFlag & ShapeFlag.STATEFUL_COMPONENT) {
           // 1.2 组件
           processComponent(n1, n2, container, parentComponent, anchor)
         }
@@ -70,7 +69,7 @@ export function createRenderer(options) {
     n2: any,
     container: any,
     parentComponent,
-    anchor
+    anchor,
   ) {
     // 不需要父容器的切片,也就是再不用创建一个容器包裹当前内容,
     // 直接将内容添加到当前的容器内,就可以了
@@ -87,12 +86,13 @@ export function createRenderer(options) {
     n2: any,
     container: any,
     parentComponent,
-    anchor
+    anchor,
   ) {
     if (!n1) {
       // 1.挂载组件
       mountComponent(n2, container, parentComponent, anchor)
-    } else {
+    }
+    else {
       // 2.更新组件
       updateComponent(n1, n2)
     }
@@ -102,7 +102,7 @@ export function createRenderer(options) {
     // 1.创建组件实例,保存于虚拟节点,用于后续`diff`获取组件实例
     const instance = (n2.component = createComponentInstance(
       n2,
-      parentComponent
+      parentComponent,
     ))
 
     // 2.初始化组件状态
@@ -120,7 +120,8 @@ export function createRenderer(options) {
       instance.next = n2
       // 3.更新组件, 需要调用组件的`render`生成新的虚拟节点进行`diff`
       instance.update()
-    } else {
+    }
+    else {
       // 4.当父组件仅更新自己内容,没有影响子组件的时候,无需触发组件更新逻辑,子组件自身处理更新逻辑即可
       n2.el = n1.el
       n2.vnode = n2
@@ -129,10 +130,11 @@ export function createRenderer(options) {
 
   function setupRenderEffect(instance, container, anchor) {
     function componentUpdateFn() {
+      const { proxy } = instance
       // @Tips: 第一次加载
       if (!instance.isMounted) {
         // 1.调用渲染函数,获取组件虚拟节点树,绑定`this`为代理对象,实现`render`函数中访问组件状态
-        const subTree = instance.render.call(instance.proxy, h)
+        const subTree = instance.render.call(proxy, proxy)
         console.log(instance.type, '创建')
 
         // 2.继续`patch`,递归挂载组件
@@ -157,7 +159,7 @@ export function createRenderer(options) {
           updateComponentPreRender(instance, nextVNode)
         }
         // 1.获取到新的虚拟节点树
-        const subTree = instance.render.call(instance.proxy, h)
+        const subTree = instance.render.call(proxy, proxy)
         console.log(instance.type, '更新')
 
         // 2.获取旧的虚拟节点树
@@ -182,7 +184,7 @@ export function createRenderer(options) {
       scheduler: () => {
         console.log('update -- scheduler')
         queueJob(instance.update)
-      }
+      },
     })
     instance.update.component = instance
   }
@@ -192,12 +194,13 @@ export function createRenderer(options) {
     n2: any,
     container: any,
     parentComponent,
-    anchor
+    anchor,
   ) {
     if (!n1) {
       // 1.挂载元素
       mountElement(n2, container, parentComponent, anchor)
-    } else {
+    }
+    else {
       // 2.更新元素
       patchElement(n1, n2, parentComponent, anchor)
     }
@@ -219,13 +222,12 @@ export function createRenderer(options) {
     // 3.处理子组件
     const { children, shapeFlag } = vnode
     // 3.1 文本类,直接设置内容
-    if (shapeFlag & ShapeFlag.TEXT_CHILDREN) {
+    if (shapeFlag & ShapeFlag.TEXT_CHILDREN)
       el.textContent = children
-    }
+
     // 3.2 数组,则证明是元素或者组件
-    else if (shapeFlag & ShapeFlag.ARRAY_CHILDREN) {
+    else if (shapeFlag & ShapeFlag.ARRAY_CHILDREN)
       mountChildren(vnode.children, el, parentComponent, anchor)
-    }
 
     hostInsert(el, container, anchor)
   }
@@ -262,26 +264,26 @@ export function createRenderer(options) {
      */
     // 1.新节点是文本节点, => 卸载节点 || 替换文本
     if (nextShapeFlag & ShapeFlag.TEXT_CHILDREN) {
-      if (prevShapeFlag & ShapeFlag.ARRAY_CHILDREN) {
+      if (prevShapeFlag & ShapeFlag.ARRAY_CHILDREN)
         unmountChildren(n1.children)
-      }
-      if (prevChildren !== nextChildren) {
+
+      if (prevChildren !== nextChildren)
         hostSetElementText(container, nextChildren)
-      }
     }
     // 2.新节点是数组节点, => 挂载新节点 || 双端对比
     else {
       if (prevShapeFlag & ShapeFlag.TEXT_CHILDREN) {
         hostSetElementText(container, '')
         mountChildren(nextChildren, container, parentComponent, anchor)
-      } else {
+      }
+      else {
         // 双端对比
         patchKeyedChildren(
           prevChildren,
           nextChildren,
           container,
           parentComponent,
-          anchor
+          anchor,
         )
       }
     }
@@ -292,7 +294,7 @@ export function createRenderer(options) {
     c2: any[],
     container,
     parentComponent,
-    anchor
+    anchor,
   ) {
     // 设置对比游标
     const l2 = c2.length
@@ -313,11 +315,11 @@ export function createRenderer(options) {
       const n1 = c1[i]
       const n2 = c2[i]
       // 判断是否同一个节点,进行比较
-      if (isSameNodeVNodeType(n1, n2)) {
+      if (isSameNodeVNodeType(n1, n2))
         patch(n1, n2, container, parentComponent, anchor)
-      } else {
+      else
         break
-      }
+
       i++
     }
 
@@ -328,11 +330,11 @@ export function createRenderer(options) {
       const n1 = c1[e1]
       const n2 = c2[e2]
       // 判断是否同一个节点,进行比较
-      if (isSameNodeVNodeType(n1, n2)) {
+      if (isSameNodeVNodeType(n1, n2))
         patch(n1, n2, container, parentComponent, anchor)
-      } else {
+      else
         break
-      }
+
       e1--
       e2--
     }
@@ -387,9 +389,8 @@ export function createRenderer(options) {
       const keyToNewIndexMap = new Map()
       for (let i = s2; i <= e2; i++) {
         const nextChild = c2[i]
-        if (nextChild.key != null) {
+        if (nextChild.key != null)
           keyToNewIndexMap.set(nextChild.key, i)
-        }
       }
 
       // 5.2 遍历旧节点,判断在新节点中是否存在,做特定处理
@@ -425,7 +426,8 @@ export function createRenderer(options) {
         let newIndex
         if (prevChild.key != null) {
           newIndex = keyToNewIndexMap.get(prevChild.key)
-        } else {
+        }
+        else {
           for (let j = s2; j <= e2; j++) {
             if (isSameNodeVNodeType(c1[i], c2[j])) {
               newIndex = j
@@ -437,13 +439,13 @@ export function createRenderer(options) {
         // newIndex 不存在,则说明旧节点在新节点中不存在
         if (newIndex === undefined) {
           hostRemove(c1[i].el)
-        } else {
+        }
+        else {
           // 是否移动位置
-          if (newIndex >= maxNewIndexSoFar) {
+          if (newIndex >= maxNewIndexSoFar)
             maxNewIndexSoFar = newIndex
-          } else {
+          else
             moved = true
-          }
 
           // 记录旧节点在新节点的下标映射,这里说明新旧节点都存在,需要进行递归比较
           // newIndex - s2 起点从0开始,但是要知道是新节点的第几个
@@ -479,7 +481,8 @@ export function createRenderer(options) {
           if (j < 0 || i !== increasingNewIndexSequence[j]) {
             console.log('移动位置')
             hostInsert(nextChild.el, container, anchor)
-          } else {
+          }
+          else {
             j--
           }
         }
@@ -494,17 +497,15 @@ export function createRenderer(options) {
         const prevProp = oldProps[key]
         const nextProp = newProps[key]
 
-        if (prevProp !== nextProp) {
+        if (prevProp !== nextProp)
           hostPatchProp(el, key, prevProp, nextProp)
-        }
       }
 
       // 2.比对旧`vnode`判断是否有删除属性
       if (keys(oldProps).length) {
         for (const key in oldProps) {
-          if (!(key in newProps)) {
+          if (!(key in newProps))
             hostPatchProp(el, key, oldProps[key], null)
-          }
         }
       }
     }
@@ -512,20 +513,19 @@ export function createRenderer(options) {
 
   // 挂载全部子组件
   function mountChildren(children: any, el: any, parentComponent, anchor) {
-    children.forEach(item => {
+    children.forEach((item) => {
       patch(null, item, el, parentComponent, anchor)
     })
   }
 
   // 卸载全部子节点
   function unmountChildren(children) {
-    for (let i = 0; i < children.length; i++) {
+    for (let i = 0; i < children.length; i++)
       hostRemove(children[i].el)
-    }
   }
 
   return {
-    createApp: createAppAPI(render)
+    createApp: createAppAPI(render),
   }
 }
 
@@ -557,16 +557,15 @@ function getSequence(arr: number[]): number[] {
       v = result.length - 1
       while (u < v) {
         c = (u + v) >> 1
-        if (arr[result[c]] < arrI) {
+        if (arr[result[c]] < arrI)
           u = c + 1
-        } else {
+        else
           v = c
-        }
       }
       if (arrI < arr[result[u]]) {
-        if (u > 0) {
+        if (u > 0)
           p[i] = result[u - 1]
-        }
+
         result[u] = i
       }
     }
