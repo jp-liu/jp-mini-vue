@@ -2,5 +2,9 @@
   "liveServer.settings.port": 5501,
   "cSpell.words": [
     "VNODE"
-  ]
+  ],
+  "prettier.enable": false,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  }
 }
