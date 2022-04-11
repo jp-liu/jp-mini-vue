@@ -2,6 +2,14 @@
   "name": "mini-vue-impl",
   "version": "1.0.0",
   "description": "Implement a mini Vue to help me understand Vue3",
+  "keywords": [
+    "vue",
+    "vue3",
+    "mini-vue",
+    "study"
+  ],
+  "license": "ISC",
+  "author": "jp-liu <fortune_coder@foxmail.com>",
   "main": "lib/jp-liu-mini-vue.cjs.js",
   "module": "lib/jp-liu-mini-vue.esm.js",
   "scripts": {
@@ -12,14 +20,6 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
-  "keywords": [
-    "vue",
-    "vue3",
-    "mini-vue",
-    "study"
-  ],
-  "author": "jp-liu <fortune_coder@foxmail.com>",
-  "license": "ISC",
   "devDependencies": {
     "@antfu/eslint-config": "^0.20.2",
     "@babel/core": "^7.16.0",

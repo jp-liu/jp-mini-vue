@@ -22,16 +22,16 @@
 
       const Base = {
         name: 'Base',
-        template: `<div>hi,{{message}}</div>`,
+        template: '<div>hi,{{message}}</div>',
         setup() {
           const message = window.msg = ref('mini-vue')
           return {
             message
-          }
+    }
         }
-      }
+}
       const rootContainer = document.getElementById('app')
-      const app = createApp(Base).mount(rootContainer)
+      createApp(Base).mount(rootContainer)
     </script>
   </body>
 </html>

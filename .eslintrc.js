@@ -7,12 +7,14 @@ module.exports = {
     'no-void': 0,
     'lines-between-class-members': 0,
     'no-unused-expressions': 0,
+    'comma-dangle': ['error', 'never'],
+    '@typescript-eslint/comma-dangle': ['error', 'never'],
     'no-unused-vars': [
       'error',
       // we are only using this rule to check for unused arguments since TS
       // catches unused variables but not args.
-      { varsIgnorePattern: '.*', args: 'none' },
+      { varsIgnorePattern: '.*', args: 'none' }
     ],
-    'no-new-func': 0,
-  },
+    'no-new-func': 0
+  }
 }
