@@ -1,5 +1,5 @@
 import { NodeTypes } from './ast'
-import { ElementNode, NodeUnion, RootNode } from './parse'
+import type { ElementNode, NodeUnion, RootNode } from './parse'
 import { TO_DISPLAY_STRING } from './runtime-helper'
 
 type NodeTransform = ((
@@ -9,7 +9,7 @@ type NodeTransform = ((
 ) => void | (() => void))
 
 export interface TransformContext {
-  root: RootNode,
+  root: RootNode
   nodeTransforms: NodeTransform[]
   helpers: Set<symbol>
   helper(key: symbol): void
@@ -37,14 +37,14 @@ function createTransformContext(root: RootNode, options: TransformOptions) {
     helpers: new Set<symbol>(),
     helper(key: symbol) {
       context.helpers.add(key)
-    }
+    },
   }
   return context
 }
 
 function traverseNode(
   node: RootNode | NodeUnion,
-  context: TransformContext
+  context: TransformContext,
 ) {
   const { nodeTransforms } = context
   const exitFns: (() => void)[] = []
@@ -57,16 +57,15 @@ function traverseNode(
   switch (node.type) {
     case NodeTypes.INTERPOLATION:
       context.helper(TO_DISPLAY_STRING)
-      break;
+      break
     case NodeTypes.ROOT:
     case NodeTypes.ELEMENT:
       traverseChildren(node, context)
-      break;
+      break
   }
   let i = exitFns.length
-  while (i--) {
+  while (i--)
     exitFns[i]()
-  }
 }
 
 function traverseChildren(node: RootNode | ElementNode, context: TransformContext) {
@@ -79,15 +78,13 @@ function traverseChildren(node: RootNode | ElementNode, context: TransformContex
   }
 }
 
-function createRootCodegenNode(root: RootNode, context: TransformContext) {
+function createRootCodegenNode(root: RootNode) {
   const { children } = root
   const firstChild = children[0]
   if (firstChild) {
-    if (firstChild.type === NodeTypes.ELEMENT) {
+    if (firstChild.type === NodeTypes.ELEMENT)
       root.codegenNode = firstChild.codegenNode
-    } else {
+    else
       root.codegenNode = firstChild
-    }
   }
 }
-

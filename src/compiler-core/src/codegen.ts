@@ -11,7 +11,7 @@ interface GenerateContext {
 }
 
 export function generate(ast: RootNode) {
-  const context = createCodegenContext()
+  const context = createGenerateContext()
   const { push } = context
 
   genFunctionPreamble(ast, context)
@@ -61,7 +61,7 @@ function genNode(node: NodeUnion, context: GenerateContext) {
   }
 }
 
-function createCodegenContext(): GenerateContext {
+function createGenerateContext(): GenerateContext {
   const context = {
     code: '',
     push(source: string) {
