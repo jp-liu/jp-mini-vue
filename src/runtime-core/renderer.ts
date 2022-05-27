@@ -20,7 +20,7 @@ export function createRenderer(options) {
     patchProp: hostPatchProp,
     insert: hostInsert,
     remove: hostRemove,
-    setElementText: hostSetElementText,
+    setElementText: hostSetElementText
   } = options
 
   // 提供给外部的启动渲染方法
@@ -69,7 +69,7 @@ export function createRenderer(options) {
     n2: any,
     container: any,
     parentComponent,
-    anchor,
+    anchor
   ) {
     // 不需要父容器的切片,也就是再不用创建一个容器包裹当前内容,
     // 直接将内容添加到当前的容器内,就可以了
@@ -86,7 +86,7 @@ export function createRenderer(options) {
     n2: any,
     container: any,
     parentComponent,
-    anchor,
+    anchor
   ) {
     if (!n1) {
       // 1.挂载组件
@@ -102,7 +102,7 @@ export function createRenderer(options) {
     // 1.创建组件实例,保存于虚拟节点,用于后续`diff`获取组件实例
     const instance = (n2.component = createComponentInstance(
       n2,
-      parentComponent,
+      parentComponent
     ))
 
     // 2.初始化组件状态
@@ -184,7 +184,7 @@ export function createRenderer(options) {
       scheduler: () => {
         console.log('update -- scheduler')
         queueJob(instance.update)
-      },
+      }
     })
     instance.update.component = instance
   }
@@ -194,7 +194,7 @@ export function createRenderer(options) {
     n2: any,
     container: any,
     parentComponent,
-    anchor,
+    anchor
   ) {
     if (!n1) {
       // 1.挂载元素
@@ -283,7 +283,7 @@ export function createRenderer(options) {
           nextChildren,
           container,
           parentComponent,
-          anchor,
+          anchor
         )
       }
     }
@@ -294,7 +294,7 @@ export function createRenderer(options) {
     c2: any[],
     container,
     parentComponent,
-    anchor,
+    anchor
   ) {
     // 设置对比游标
     const l2 = c2.length
@@ -525,7 +525,7 @@ export function createRenderer(options) {
   }
 
   return {
-    createApp: createAppAPI(render),
+    createApp: createAppAPI(render)
   }
 }
 

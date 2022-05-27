@@ -42,7 +42,7 @@ function convert(value) {
   return isObject(value) ? reactive(value) : value
 }
 
-function trackRefValue(ref) {
+export function trackRefValue(ref) {
   if (isTracking())
     trackEffects(ref.dep)
 }
