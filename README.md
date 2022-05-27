@@ -1,10 +1,10 @@
-# mini-vue-impl
+# jp-mini-vue
 
 > 实现一个 `mini-vue` 帮助自己理解 `vue3`,纯粹自己学习,希望大家也可以学到一些东西, 欢迎指正哦~
 
 看看 `vue` 的架构实现 Package Dependencies
 
-```
+```template
                                     +---------------------+
                                     |                     |
                                     |  @vue/compiler-sfc  |
@@ -29,7 +29,7 @@
 
 目前简版实现
 
-```
+```template
                                     +---------------------+
                                     |                     |
                                     |  @vue/compiler-sfc  |
@@ -89,11 +89,12 @@
      }
      // 2.2 属性
      else {
-       if (!nextProp) {
+       if (!nextProp)
          el.removeAttribute(key)
-       } else {
+   
+       else
          el.setAttribute(key, nextProp)
-       }
+   
      }
    }
 
@@ -107,9 +108,9 @@
 
    function remove(el: HTMLElement) {
      const parent = el.parentNode
-     if (parent) {
+     if (parent)
        parent.removeChild(el)
-     }
+   
    }
 
    const renderer: any = createRenderer({
