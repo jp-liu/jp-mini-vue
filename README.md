@@ -1,4 +1,4 @@
-# mini-vue-impl
+# jp-mini-vue
 
 > 实现一个 `mini-vue` 帮助自己理解 `vue3`,纯粹自己学习,希望大家也可以学到一些东西, 欢迎指正哦~
 
