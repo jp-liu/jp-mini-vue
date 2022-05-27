@@ -9,6 +9,7 @@ module.exports = {
     'no-unused-expressions': 0,
     'comma-dangle': ['error', 'never'],
     '@typescript-eslint/comma-dangle': ['error', 'never'],
+    '@typescript-eslint/no-this-alias': 0,
     'no-unused-vars': [
       'error',
       // we are only using this rule to check for unused arguments since TS

@@ -10,12 +10,14 @@ const targetMap = new WeakMap()
  * @description 被收集的依赖函数类
  */
 export class ReactiveEffect {
+  active = true // 是否被执行了 `stop` 退出了响应式系统的收集
+  deps: any[] = []
+  parent: ReactiveEffect | undefined = undefined
+
   private _fn: () => void
   // 响应式第一次触发后,让用户自己决定后续的 set 操作要做的事情
   public scheduler?: () => void | undefined
   onStop?: () => void
-  deps: any[] = []
-  active: boolean = true // 是否被执行了 `stop` 退出了响应式系统的收集
 
   constructor(fn: () => void, scheduler?: () => void) {
     this._fn = fn
@@ -25,20 +27,38 @@ export class ReactiveEffect {
   run() {
     // 执行`stop`之后,应该避免收集依赖,不开启依赖收集开关
     // 因为退出响应式系统,仍然保留着 fn 函数的执行权力
-    if (!this.active) {
+    if (!this.active)
       return this._fn()
+
+    // 解决嵌套 `effect` 的情况下, `shouldTrack` 和 `activeEffect` 错误和丢失的问题
+    // 使用 parent 链,伪造一个栈结构,退出当前执行,`activeEffect`还原之前上一级活跃对象
+    // 记录当前活跃类
+    let parent: ReactiveEffect | undefined = activeEffect
+
+    // 记录依赖收集开关
+    // 记录当前追踪状态,嵌套使用的时,子级退出后,可以保持追踪状态
+    const lastShouldTrack = shouldTrack
+    while (parent) {
+      if (parent === this) // 避免重复执行
+        return
+      parent = parent.parent
     }
 
-    // 1.开启开关,允许依赖收集
-    shouldTrack = true
-    // 2.设置依赖收集的目标
-    activeEffect = this
-    // 3.执行`fn`,调用内部的`get`的时候,就可以收集`activeEffect`了
-    const result = this._fn()
-    // 4.关闭依赖收集开关
-    shouldTrack = false
-
-    return result
+    try {
+      // 0.记录当前活跃副作用函数
+      this.parent = activeEffect
+      // 1.开启开关,允许依赖收集
+      shouldTrack = true
+      // 2.设置依赖收集的目标
+      activeEffect = this
+      // 3.执行`fn`,调用内部的`get`的时候,就可以收集`activeEffect`了
+      return this._fn()
+    }
+    finally {
+      activeEffect = this.parent
+      shouldTrack = lastShouldTrack
+      this.parent = undefined
+    }
   }
 
   // 退出响应式系统
@@ -47,7 +67,8 @@ export class ReactiveEffect {
     if (this.active) {
       cleanupEffect(this)
       // 如果给了回调,则进行回调
-      if (this.onStop) this.onStop()
+      if (this.onStop)
+        this.onStop()
       this.active = false
     }
   }
@@ -80,7 +101,7 @@ export function stop(runner) {
 }
 
 function cleanupEffect(effect: ReactiveEffect) {
-  effect.deps.forEach(dep => {
+  effect.deps.forEach((dep) => {
     dep.delete(effect)
   })
   effect.deps.length = 0
@@ -93,7 +114,8 @@ function cleanupEffect(effect: ReactiveEffect) {
  */
 export function track(target, key) {
   // @desc: 不是收集状态,直接返回
-  if (!isTracking()) return
+  if (!isTracking())
+    return
 
   // console.log(`触发 track -> target: ${target} key:${key}`)
 
@@ -150,7 +172,8 @@ export function triggerEffects(dep) {
     if (effect.scheduler) {
       // 如果用户需要自己拥有操作权,则采用这个方案
       effect.scheduler()
-    } else {
+    }
+    else {
       effect.run()
     }
   }
