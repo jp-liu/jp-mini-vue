@@ -18,6 +18,19 @@ describe('effect', () => {
     expect(nextAge).toBe(12)
   })
 
+  it('should handle multiple effects', () => {
+    let dummy1, dummy2
+    const counter = reactive({ num: 0 })
+    effect(() => (dummy1 = counter.num))
+    effect(() => (dummy2 = counter.num))
+
+    expect(dummy1).toBe(0)
+    expect(dummy2).toBe(0)
+    counter.num++
+    expect(dummy1).toBe(1)
+    expect(dummy2).toBe(1)
+  })
+
   it('run time debounce', () => {
     const info: any = {}
     const user = reactive({
@@ -37,6 +50,44 @@ describe('effect', () => {
     expect(fn).toHaveBeenCalledTimes(3)
     expect(info.name).toBe('娃哈哈')
     expect(info.age).toBe(11)
+  })
+
+  it('should observe function call chains', () => {
+    let dummy
+    const counter = reactive({ num: 0 })
+    effect(() => (dummy = getNum()))
+
+    function getNum() {
+      return counter.num
+    }
+
+    expect(dummy).toBe(0)
+    counter.num = 2
+    expect(dummy).toBe(2)
+  })
+
+  it('nested effect', () => {
+    let dummy1, dummy2
+    const obj = reactive({ num1: 1, num2: 2 })
+
+    const fnSpy2 = jest.fn(() => {
+      dummy2 = obj.num2
+    })
+
+    const fnSpy1 = jest.fn(() => {
+      effect(fnSpy2)
+      dummy1 = obj.num1
+    })
+
+    effect(fnSpy1)
+
+    expect(fnSpy1).toHaveBeenCalledTimes(1)
+    expect(fnSpy2).toHaveBeenCalledTimes(1)
+
+    // TODO 待解决,嵌套
+    obj.num1 = 2
+    expect(fnSpy1).toHaveBeenCalledTimes(2)
+    expect(fnSpy2).toHaveBeenCalledTimes(2)
   })
 
   it('nested reactive effect', () => {
