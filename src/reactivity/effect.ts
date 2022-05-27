@@ -39,7 +39,8 @@ export class ReactiveEffect {
     // 记录当前追踪状态,嵌套使用的时,子级退出后,可以保持追踪状态
     const lastShouldTrack = shouldTrack
     while (parent) {
-      if (parent === this) // 避免重复执行
+      // 避免重复执行, 如: xx++自增/ xx = xx+ 1
+      if (parent === this)
         return
       parent = parent.parent
     }
@@ -51,7 +52,10 @@ export class ReactiveEffect {
       shouldTrack = true
       // 2.设置依赖收集的目标
       activeEffect = this
-      // 3.执行`fn`,调用内部的`get`的时候,就可以收集`activeEffect`了
+      // 3.清理无效的依赖收集
+      // 这里删除,fn 又收集了,死循环了,所以需要new Set() 存放一个备份,不影响原部分
+      cleanupEffect(this)
+      // 4.执行`fn`,调用内部的`get`的时候,就可以收集`activeEffect`了
       return this._fn()
     }
     finally {
@@ -101,9 +105,14 @@ export function stop(runner) {
 }
 
 function cleanupEffect(effect: ReactiveEffect) {
-  effect.deps.forEach((dep) => {
-    dep.delete(effect)
-  })
+  const len = effect.deps.length
+
+  for (let i = len - 1; i >= 0; i--)
+    effect.deps[i].delete(effect)
+
+  // effect.deps.forEach((dep) => {
+  //   dep.delete(effect)
+  // })
   effect.deps.length = 0
 }
 
@@ -161,7 +170,15 @@ export function trigger(target, key) {
   // console.log(`触发 trigger -> target: ${target} key:${key}`)
 
   const depsMap = targetMap.get(target)
-  const dep = depsMap.get(key)
+  if (!depsMap)
+    return // 无效更新
+
+  let dep = depsMap.get(key)
+
+  if (!dep)
+    return
+
+  dep = createDep(dep)
 
   // @desc: 手动触发`trigger`,让其他人也可以加入响应式系统, 如`ref`
   triggerEffects(dep)
@@ -169,12 +186,18 @@ export function trigger(target, key) {
 
 export function triggerEffects(dep) {
   for (const effect of dep) {
-    if (effect.scheduler) {
-      // 如果用户需要自己拥有操作权,则采用这个方案
-      effect.scheduler()
-    }
-    else {
-      effect.run()
+    if (effect !== activeEffect) {
+      if (effect.scheduler) {
+        // 如果用户需要自己拥有操作权,则采用这个方案
+        effect.scheduler()
+      }
+      else {
+        effect.run()
+      }
     }
   }
+}
+
+export function createDep(dep?) {
+  return new Set(dep)
 }

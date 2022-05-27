@@ -1,7 +1,8 @@
 import { hasChanged, isObject } from '../shared'
+import type { ReactiveEffect } from './effect'
 import {
+  createDep,
   isTracking,
-  ReactiveEffect,
   trackEffects,
   triggerEffects
 } from './effect'
@@ -32,7 +33,7 @@ class RefImpl {
     if (hasChanged(this._raw, newValue)) {
       this._raw = newValue
       this._value = convert(newValue)
-      triggerEffects(this.dep)
+      triggerEffects(createDep(this.dep))
     }
   }
 }
@@ -42,9 +43,8 @@ function convert(value) {
 }
 
 function trackRefValue(ref) {
-  if (isTracking()) {
+  if (isTracking())
     trackEffects(ref.dep)
-  }
 }
 
 export function ref(value) {
@@ -71,9 +71,9 @@ export function proxyRefs(objectWithRef) {
     },
     set(target, key, value) {
       // 如果新值是ref直接赋值,如果不是,则需要对value赋值
-      if (isRef(target[key]) && !isRef(value)) {
+      if (isRef(target[key]) && !isRef(value))
         return (target[key].value = value)
-      }
+
       return Reflect.set(target, key, value)
     }
   })
