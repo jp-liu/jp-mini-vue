@@ -70,8 +70,8 @@ function deleteProperty(target, key) {
 function has(target, key) {
   const result = Reflect.has(target, key)
 
-  // 不是符号类型的 key, 或者不是系统自带符号类型
-  if (isSymbol(key) || !builtInSymbols.has(key))
+  // 不是符号类型的 key, 或者不是系统自带符号类型.系统自带的key的调用无需处理
+  if (!isSymbol(key) || !builtInSymbols.has(key))
     track(target, key)
 
   return result
